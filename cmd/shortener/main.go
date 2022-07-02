@@ -15,7 +15,6 @@ func main() {
 		c.String(http.StatusOK, "link shortner")
 	})
 
-	r.GET("/popa/", handlers.Popa())
 	r.POST("/", handlers.CrShort())
 	r.GET("/:id", handlers.ReLong())
 	r.Run()
