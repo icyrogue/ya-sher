@@ -34,7 +34,7 @@ func CrShort() gin.HandlerFunc {
 		}
 
 		urls[string(req)] = idgen.GenID(string(req))
-		c.String(http.StatusOK, hostname+urls[string(req)])
+		c.String(http.StatusCreated, hostname+urls[string(req)])
 	}
 
 }
