@@ -2,7 +2,7 @@ package idgen
 
 import "math/rand"
 
-func GendId(data string) string {
+func GenID(data string) string {
 	chars := "qwertyuiopasdfghklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
 
 	output := []byte{}

@@ -14,12 +14,6 @@ import (
 var urls = make(map[string]string)
 var hostname string = "http://localhost:8080/"
 
-func Popa() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.String(http.StatusOK, "popa")
-	}
-}
-
 // Create short version from long one
 func CrShort() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -39,7 +33,7 @@ func CrShort() gin.HandlerFunc {
 			return
 		}
 
-		urls[string(req)] = idgen.GendId(string(req))
+		urls[string(req)] = idgen.GenID(string(req))
 		c.String(http.StatusOK, hostname+urls[string(req)])
 	}
 
