@@ -9,7 +9,7 @@ import (
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 
-	r := gin.Default()
+	r := gin.New()
 	r.POST("/", handlers.CrShort())
 	r.GET("/:id", handlers.ReLong())
 	r.Run()
