@@ -54,7 +54,6 @@ func ReLong() gin.HandlerFunc {
 		}
 		for key, val := range urls {
 			if val == id {
-				c.Header("Location", key)
 				c.String(http.StatusTemporaryRedirect, key)
 			}
 		}
