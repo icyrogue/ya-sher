@@ -6,17 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func apiInit() *gin.Engine {
+func main() {
+	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.New()
 	r.POST("/", handlers.CrShort())
 	r.GET("/:id", handlers.ReLong())
-	return r
-}
-func main() {
-
-	gin.SetMode(gin.ReleaseMode)
-	r := apiInit()
 	r.Run()
-
 }
