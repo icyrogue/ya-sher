@@ -1,16 +1,9 @@
 package idgen
 
-import (
-	"math/rand"
-	"time"
-)
+import "math/rand"
 
-//Get a seed so that ids are random every time
-func InitID() {
-	rand.Seed(time.Now().UnixMicro())
-}
 func GenID(data string) string {
-	chars := []byte("qwertyuiopasdfghklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890")
+	chars := "qwertyuiopasdfghklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
 
 	output := []byte{}
 	for i := 0; i != 8; i++ {
