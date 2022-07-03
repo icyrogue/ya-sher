@@ -63,6 +63,7 @@ func Test_main(t *testing.T) {
 			req = httptest.NewRequest(http.MethodGet, string(id), nil)
 			r.ServeHTTP(w2, req)
 			res = w2.Result()
+			defer res.Body.Close() //<-- Иначе автотест ругается
 			//Testing Codes\\
 			if res.StatusCode != tt.want.GetCode {
 				t.Errorf("Expected %d got %d", tt.want.GetCode, res.StatusCode)
