@@ -1,6 +1,7 @@
 package main
 
 import (
+	idgen "github.com/icyrogue/ya-sher/IdGen"
 	"github.com/icyrogue/ya-sher/handlers"
 
 	"github.com/gin-gonic/gin"
@@ -14,7 +15,7 @@ func apiInit() *gin.Engine {
 	return r
 }
 func main() {
-
+	idgen.InitID()
 	gin.SetMode(gin.ReleaseMode)
 	r := apiInit()
 	r.Run()
