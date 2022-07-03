@@ -29,13 +29,13 @@ func CrShort() gin.HandlerFunc {
 		if err != nil {
 			fmt.Println(err)
 		}
-		r := regexp.MustCompile(`.*\..*`)
-		if !r.MatchString(string(req)) {
+		r := regexp.MustCompile(".*\\..*")
+		if r.MatchString(string(req)) == false {
 			c.String(http.StatusBadRequest, "This isn't an URL!")
 			return
 		}
 		if el, fd := urls[string(req)]; fd {
-			c.String(http.StatusCreated, el)
+			c.String(http.StatusOK, el)
 			return
 		}
 
@@ -54,7 +54,7 @@ func ReLong() gin.HandlerFunc {
 		}
 		for key, val := range urls {
 			if val == id {
-				c.String(http.StatusTemporaryRedirect, key)
+				c.String(http.StatusOK, key)
 			}
 		}
 	}
