@@ -1,5 +1,10 @@
 package urlstorage
 
+import (
+	"errors"
+	"sync"
+)
+
 type Url struct {
 	Short string
 	Long  string
@@ -7,6 +12,15 @@ type Url struct {
 }
 
 var mockStorage = []Url{}
+
+type storage struct {
+	data map[string]string
+	mtx  sync.RWMutex
+}
+
+func New() *storage {
+	return &storage{data: make(map[string]string)}
+}
 
 func NewUrl(long string, short string) Url {
 	return Url{
@@ -16,9 +30,16 @@ func NewUrl(long string, short string) Url {
 	}
 }
 
-//AddToStorage: adds url to mock database
-func (u Url) AddToStorage() {
-	mockStorage = append(mockStorage, u)
+//Add: adds url to mock database
+func (st *storage) Add(id string, long string) error {
+	st.mtx.Lock()
+	defer st.mtx.Unlock()
+	if _, ok := st.data[id]; ok {
+		return errors.New("already exist")
+	}
+	st.data[id] = long
+
+	return nil
 }
 
 //GetLongByID: returns long version from id

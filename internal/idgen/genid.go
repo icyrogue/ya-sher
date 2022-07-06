@@ -25,3 +25,23 @@ func GenID() string {
 		}
 	}
 }
+
+type usecase struct {
+	storage Storage
+}
+
+func New(storage Storage) *usecase {
+	return &usecase{storage: storage}
+}
+
+func (u *usecase) CreateShortURL(long string) (shurl string, err error) {
+	shurl = GenID()
+	if err := u.storage.Add(shurl, long); err != nil {
+		return "", err
+	}
+	return shurl, nil
+}
+
+type Storage interface {
+	Add(id, long string) error
+}
