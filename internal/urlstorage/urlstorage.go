@@ -1,41 +1,42 @@
 package urlstorage
 
-type Url struct {
-	Short string
-	Long  string
-	ID    string
+import (
+	"errors"
+	"sync"
+)
+
+type storage struct {
+	data map[string]string
+	mtx  sync.RWMutex
 }
 
-var mockStorage = []Url{}
-
-func NewUrl(long string, short string) Url {
-	return Url{
-		Short: short,
-		Long:  long,
-		ID:    short[len(short)-8:],
+func New() *storage {
+	return &storage{
+		data: make(map[string]string),
 	}
 }
 
 //AddToStorage: adds url to mock database
-func (u Url) AddToStorage() {
-	mockStorage = append(mockStorage, u)
+func (st *storage) Add(id string, long string) error {
+	st.mtx.Lock()
+	defer st.mtx.Unlock()
+	if _, fd := st.data[id]; fd {
+		return errors.New("Url with that id already exists")
+	}
+	st.data[id] = long
+	return nil
 }
-
-//GetLongByID: returns long version from id
-func GetByID(id string) *Url {
-	for _, u := range mockStorage {
-		if u.ID == id {
-			return &u
-		}
+func (st *storage) GetByID(id string) *string {
+	if _, fd := st.data[id]; fd {
+		var long string = st.data[id]
+		return &long
 	}
 	return nil
 }
-
-//GetByLong: retruns short version by long version
-func GetByLong(long string) *Url {
-	for _, u := range mockStorage {
-		if u.Long == long {
-			return &u
+func (st *storage) GetByLong(long string) *string {
+	for id, el := range st.data {
+		if el == long {
+			return &id
 		}
 	}
 	return nil
