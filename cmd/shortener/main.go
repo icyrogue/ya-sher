@@ -17,7 +17,7 @@ func main() {
 	}
 	storage := urlstorage.New()
 	usecase := idgen.New(storage)
-	api := api.New(logger, &api.Options{Hostname: "http:/localhost:8080"}, usecase, storage)
+	api := api.New(logger, &api.Options{Hostname: "http://localhost:8080"}, usecase, storage)
 	api.Init()
 	api.Run()
 }
