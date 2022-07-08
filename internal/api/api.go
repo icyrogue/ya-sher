@@ -3,7 +3,6 @@ package api
 import (
 	"io/ioutil"
 	"net/http"
-	"path"
 	"regexp"
 
 	"github.com/gin-gonic/gin"
@@ -75,7 +74,7 @@ func (a *api) CrShort() gin.HandlerFunc {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		c.String(http.StatusCreated, path.Join(a.opts.Hostname, url))
+		c.String(http.StatusCreated, a.opts.Hostname+"/"+url)
 	}
 
 }
