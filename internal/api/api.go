@@ -89,8 +89,13 @@ func (a *api) ReLong() gin.HandlerFunc {
 			return
 		}
 		key := a.st.GetByID(id)
-		c.Header("Location", *key)
-		c.String(http.StatusTemporaryRedirect, *key)
+		if key == nil {
+			c.String(http.StatusNotFound, "There isnt a url for this id")
+			return
+		}
+		var long string = *key
+		c.Header("Location", long)
+		c.String(http.StatusTemporaryRedirect, long)
 
 	}
 }
