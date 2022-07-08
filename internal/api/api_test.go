@@ -1,71 +1,111 @@
 package api
 
 import (
-	"reflect"
+	"bytes"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
+	"github.com/icyrogue/ya-sher/internal/idgen"
+	"github.com/icyrogue/ya-sher/internal/urlstorage"
 	"go.uber.org/zap"
 )
 
 func Test_api_CrShort(t *testing.T) {
-	type fields struct {
-		router  *gin.Engine
-		logger  *zap.Logger
-		opts    *Options
-		urlProc URLProcessor
-		st      Storage
-	}
+
 	tests := []struct {
-		name   string
-		fields fields
-		want   gin.HandlerFunc
+		name       string
+		want       string
+		wantedCode int
 	}{
-		// TODO: Add test cases.
+		{name: "Simple POST test #1",
+			want:       "smokybananas.com",
+			wantedCode: http.StatusCreated},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &api{
-				router:  tt.fields.router,
-				logger:  tt.fields.logger,
-				opts:    tt.fields.opts,
-				urlProc: tt.fields.urlProc,
-				st:      tt.fields.st,
+			//BOILERPLATE\\
+			idgen.InitID()
+			logger, err := zap.NewDevelopment()
+			if err != nil {
+				log.Fatalln(err)
 			}
-			if got := a.CrShort(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("api.CrShort() = %v, want %v", got, tt.want)
+			storage := urlstorage.New()
+			usecase := idgen.New(storage)
+			api := New(logger, &Options{Hostname: "http://localhost:8080"}, usecase, storage)
+			api.Init()
+			//Testing POST itself
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(tt.want)))
+			api.router.ServeHTTP(w, req)
+
+			res := w.Result()
+
+			if res.StatusCode != tt.wantedCode {
+				t.Errorf("Expected %d got %d", tt.wantedCode, res.StatusCode)
+			}
+			defer res.Body.Close()
+			body, err1 := ioutil.ReadAll(res.Body)
+			if err1 != nil {
+				t.Error(err1)
+			}
+			shurl := storage.GetByLong(tt.want)
+			if shurl == nil {
+				t.Error("Url wasnt found in storage!")
+			}
+			body = body[len(body)-8:]
+			if string(body) != *shurl {
+				t.Errorf("Expected %s got %s", *shurl, body)
 			}
 		})
 	}
 }
 
 func Test_api_ReLong(t *testing.T) {
-	type fields struct {
-		router  *gin.Engine
-		logger  *zap.Logger
-		opts    *Options
-		urlProc URLProcessor
-		st      Storage
-	}
 	tests := []struct {
-		name   string
-		fields fields
-		want  string
-	}{ {name: "Simple Test #1",
-			}
+		name       string
+		want       string
+		wantedCode int
+	}{{name: "Simple Test #1",
+		want:       "google.com",
+		wantedCode: http.StatusTemporaryRedirect},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &api{
-				router:  tt.fields.router,
-				logger:  tt.fields.logger,
-				opts:    tt.fields.opts,
-				urlProc: tt.fields.urlProc,
-				st:      tt.fields.st,
+			//BOILERPLATE\\
+			idgen.InitID()
+			logger, err := zap.NewDevelopment()
+			if err != nil {
+				log.Fatalln(err)
 			}
-			if got := a.ReLong(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("api.ReLong() = %v, want %v", got, tt.want)
+			storage := urlstorage.New()
+			usecase := idgen.New(storage)
+			api := New(logger, &Options{Hostname: "http://localhost:8080"}, usecase, storage)
+			api.Init()
+			//Creating mock short
+			shurl, err1 := usecase.CreateShortURL(tt.want)
+			if err1 != nil {
+				t.Error(err1)
 			}
+			storage.Add(shurl, tt.want)
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "/"+shurl, nil)
+			api.router.ServeHTTP(w, req)
+
+			res := w.Result()
+			defer res.Body.Close()
+
+			if res.StatusCode != tt.wantedCode {
+				t.Errorf("Expected %d got %d", tt.wantedCode, res.StatusCode)
+			}
+
+			header := res.Header.Get("Location")
+			if header != tt.want {
+				t.Errorf("Expected %s got %s", tt.want, header)
+			}
+
 		})
 	}
 }
