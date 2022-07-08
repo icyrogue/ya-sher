@@ -21,14 +21,14 @@ func (st *storage) Add(id string, long string) error {
 	st.mtx.Lock()
 	defer st.mtx.Unlock()
 	if _, fd := st.data[id]; fd {
-		return errors.New("Url with that id already exists")
+		return errors.New("url with that id already exists")
 	}
 	st.data[id] = long
 	return nil
 }
 func (st *storage) GetByID(id string) *string {
 	if _, fd := st.data[id]; fd {
-		var long string = st.data[id]
+		var long = st.data[id]
 		return &long
 	}
 	return nil
