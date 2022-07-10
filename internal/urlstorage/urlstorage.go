@@ -27,7 +27,7 @@ func (st *storage) Add(id string, long string) error {
 	return nil
 }
 func (st *storage) GetByID(id string) (string, error) {
-	st.mtx.Lock()
+	st.mtx.RLock()
 	defer st.mtx.Unlock()
 
 	if _, fd := st.data[id]; fd {
