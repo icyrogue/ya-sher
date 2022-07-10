@@ -26,18 +26,24 @@ func (st *storage) Add(id string, long string) error {
 	st.data[id] = long
 	return nil
 }
-func (st *storage) GetByID(id string) *string {
+func (st *storage) GetByID(id string) string {
+	st.mtx.Lock()
+	defer st.mtx.Unlock()
+
 	if _, fd := st.data[id]; fd {
 		var long = st.data[id]
-		return &long
+		return long
 	}
-	return nil
+	return ""
 }
-func (st *storage) GetByLong(long string) *string {
+func (st *storage) GetByLong(long string) string {
+	st.mtx.Lock()
+	defer st.mtx.Unlock()
+
 	for id, el := range st.data {
 		if el == long {
-			return &id
+			return id
 		}
 	}
-	return nil
+	return ""
 }

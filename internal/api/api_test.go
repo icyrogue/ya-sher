@@ -52,13 +52,13 @@ func Test_api_CrShort(t *testing.T) {
 				t.Error(err1)
 			}
 			shurl := storage.GetByLong(tt.want)
-			if shurl == nil {
+			if shurl == "" {
 				t.Error("Url wasnt found in storage!")
 				return
 			}
 			body = body[len(body)-8:]
-			if string(body) != *shurl {
-				t.Errorf("Expected %s got %s", *shurl, body)
+			if string(body) != shurl {
+				t.Errorf("Expected %s got %s", shurl, body)
 			}
 		})
 	}
