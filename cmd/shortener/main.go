@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-	idgen.InitID()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		log.Fatal(err)

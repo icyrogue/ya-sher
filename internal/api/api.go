@@ -12,12 +12,13 @@ import (
 //URLProcessor interface for creating short url using idgen business logic
 type URLProcessor interface {
 	CreateShortURL(long string) (shurl string, err error)
+	InitID()
 }
 
 //Storage interface for interfacing with storage
 type Storage interface {
-	GetByLong(long string) string
-	GetByID(id string) string
+	GetByLong(long string) (string, error)
+	GetByID(id string) (string, error)
 }
 
 type api struct {
@@ -42,6 +43,8 @@ func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage) *a
 }
 
 func (a *api) Init() {
+	a.urlProc.InitID()
+
 	gin.SetMode(gin.ReleaseMode)
 	a.router = gin.New()
 	a.router.POST("/", a.CrShort)
@@ -66,8 +69,8 @@ func (a *api) CrShort(c *gin.Context) {
 		c.String(http.StatusBadRequest, "This isn't an URL!")
 		return
 	}
-	if el := a.st.GetByLong(string(req)); el != "" {
-		c.String(http.StatusCreated, el)
+	if el, errEl := a.st.GetByLong(string(req)); errEl == nil {
+		c.String(http.StatusCreated, a.opts.Hostname+"/"+el)
 		return
 	}
 
@@ -87,9 +90,9 @@ func (a *api) ReLong(c *gin.Context) {
 		c.String(http.StatusBadRequest, "This isn't an id")
 		return
 	}
-	key := a.st.GetByID(id)
-	if key == "" {
-		c.String(http.StatusNotFound, "There isnt a url for this id")
+	key, err := a.st.GetByID(id)
+	if err != nil {
+		c.String(http.StatusNotFound, err.Error())
 		return
 	}
 	c.Header("Location", key)

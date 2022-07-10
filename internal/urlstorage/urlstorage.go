@@ -26,24 +26,24 @@ func (st *storage) Add(id string, long string) error {
 	st.data[id] = long
 	return nil
 }
-func (st *storage) GetByID(id string) string {
+func (st *storage) GetByID(id string) (string, error) {
 	st.mtx.Lock()
 	defer st.mtx.Unlock()
 
 	if _, fd := st.data[id]; fd {
 		var long = st.data[id]
-		return long
+		return long, nil
 	}
-	return ""
+	return "", errors.New("no url with such ID")
 }
-func (st *storage) GetByLong(long string) string {
+func (st *storage) GetByLong(long string) (string, error) {
 	st.mtx.Lock()
 	defer st.mtx.Unlock()
 
 	for id, el := range st.data {
 		if el == long {
-			return id
+			return id, nil
 		}
 	}
-	return ""
+	return "", errors.New("no url with such id")
 }

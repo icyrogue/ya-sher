@@ -27,7 +27,6 @@ func Test_api_CrShort(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			//BOILERPLATE\\
-			idgen.InitID()
 			logger, err := zap.NewDevelopment()
 			if err != nil {
 				log.Fatalln(err)
@@ -51,9 +50,9 @@ func Test_api_CrShort(t *testing.T) {
 			if err1 != nil {
 				t.Error(err1)
 			}
-			shurl := storage.GetByLong(tt.want)
-			if shurl == "" {
-				t.Error("Url wasnt found in storage!")
+			shurl, err2 := storage.GetByLong(tt.want)
+			if err2 != nil {
+				t.Error(err.Error())
 				return
 			}
 			body = body[len(body)-8:]
@@ -76,7 +75,6 @@ func Test_api_ReLong(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			//BOILERPLATE\\
-			idgen.InitID()
 			logger, err := zap.NewDevelopment()
 			if err != nil {
 				log.Fatalln(err)
