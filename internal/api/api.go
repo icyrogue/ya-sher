@@ -12,7 +12,6 @@ import (
 //URLProcessor interface for creating short url using idgen business logic
 type URLProcessor interface {
 	CreateShortURL(long string) (shurl string, err error)
-	InitID()
 }
 
 //Storage interface for interfacing with storage
@@ -43,7 +42,6 @@ func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage) *a
 }
 
 func (a *api) Init() {
-	a.urlProc.InitID()
 
 	gin.SetMode(gin.ReleaseMode)
 	a.router = gin.New()

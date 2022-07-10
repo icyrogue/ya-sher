@@ -6,7 +6,7 @@ import (
 )
 
 //Get a seed so that ids are random every time
-func (u *usecase) InitID() {
+func init() {
 	rand.Seed(time.Now().UnixMicro())
 }
 
