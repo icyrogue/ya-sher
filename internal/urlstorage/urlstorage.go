@@ -28,7 +28,7 @@ func (st *storage) Add(id string, long string) error {
 }
 func (st *storage) GetByID(id string) (string, error) {
 	st.mtx.RLock()
-	defer st.mtx.Unlock()
+	defer st.mtx.RUnlock()
 
 	if _, fd := st.data[id]; fd {
 		var long = st.data[id]
@@ -37,9 +37,6 @@ func (st *storage) GetByID(id string) (string, error) {
 	return "", errors.New("no url with such ID")
 }
 func (st *storage) GetByLong(long string) (string, error) {
-	st.mtx.Lock()
-	defer st.mtx.Unlock()
-
 	for id, el := range st.data {
 		if el == long {
 			return id, nil
