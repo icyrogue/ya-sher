@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -43,10 +44,11 @@ func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage) *a
 
 func (a *api) Init() {
 
-	gin.SetMode(gin.ReleaseMode)
-	a.router = gin.New()
+	gin.SetMode(gin.DebugMode)
+	a.router = gin.Default()
 	a.router.POST("/", a.CrShort)
 	a.router.GET("/:id", a.ReLong)
+	a.router.POST("/api/shorten", a.Shorten)
 }
 func (a *api) Run() {
 	a.router.Run()
@@ -96,4 +98,42 @@ func (a *api) ReLong(c *gin.Context) {
 	c.Header("Location", key)
 	c.String(http.StatusTemporaryRedirect, key)
 
+}
+
+//Shorten: gives back json short link
+func (a *api) Shorten(c *gin.Context) {
+	type tmp struct {
+		Url string `json:"url"`
+	}
+
+	url := tmp{}
+	res := c.Request.Body
+
+	defer res.Close()
+	body, err := ioutil.ReadAll(res)
+	if err != nil {
+		a.logger.Error("couldnt read request")
+		return
+	}
+	json.Unmarshal(body, &url)
+
+	c.Header("Content-Type", "application/json")
+	shurl, err2 := a.urlProc.CreateShortURL(url.Url)
+
+	if err2 != nil {
+		c.String(http.StatusInternalServerError, err2.Error())
+		return
+	}
+	var result []byte
+	var err3 error
+	resUrl := struct {
+		Result string `json:"result"`
+	}{
+		Result: a.opts.Hostname + "/" + shurl,
+	}
+	if result, err3 = json.Marshal(resUrl); err3 != nil {
+		c.String(http.StatusInternalServerError, err3.Error())
+		return
+	}
+	c.String(http.StatusOK, string(result))
 }

@@ -87,6 +87,7 @@ func Test_api_ReLong(t *testing.T) {
 			shurl, err1 := usecase.CreateShortURL(tt.want)
 			if err1 != nil {
 				t.Error(err1)
+
 			}
 			storage.Add(shurl, tt.want)
 			w := httptest.NewRecorder()
