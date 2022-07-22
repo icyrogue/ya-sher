@@ -103,7 +103,7 @@ func (a *api) ReLong(c *gin.Context) {
 //Shorten: gives back json short link
 func (a *api) Shorten(c *gin.Context) {
 	type tmp struct {
-		Url string `json:"url"`
+		URL string `json:"url"`
 	}
 
 	url := tmp{}
@@ -118,7 +118,7 @@ func (a *api) Shorten(c *gin.Context) {
 	json.Unmarshal(body, &url)
 
 	c.Header("Content-Type", "application/json")
-	shurl, err2 := a.urlProc.CreateShortURL(url.Url)
+	shurl, err2 := a.urlProc.CreateShortURL(url.URL)
 
 	if err2 != nil {
 		c.String(http.StatusInternalServerError, err2.Error())
@@ -126,12 +126,12 @@ func (a *api) Shorten(c *gin.Context) {
 	}
 	var result []byte
 	var err3 error
-	resUrl := struct {
+	resURL := struct {
 		Result string `json:"result"`
 	}{
 		Result: a.opts.Hostname + "/" + shurl,
 	}
-	if result, err3 = json.Marshal(resUrl); err3 != nil {
+	if result, err3 = json.Marshal(resURL); err3 != nil {
 		c.String(http.StatusInternalServerError, err3.Error())
 		return
 	}
