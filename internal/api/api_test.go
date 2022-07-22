@@ -32,7 +32,7 @@ func Test_api_CrShort(t *testing.T) {
 			if err != nil {
 				log.Fatalln(err)
 			}
-			storage := urlstorage.New()
+			storage := urlstorage.New("")
 			usecase := idgen.New(storage)
 			api := New(logger, &Options{Hostname: "http://localhost:8080"}, usecase, storage)
 			api.Init()
@@ -80,7 +80,7 @@ func Test_api_ReLong(t *testing.T) {
 			if err != nil {
 				log.Fatalln(err)
 			}
-			storage := urlstorage.New()
+			storage := urlstorage.New("")
 			usecase := idgen.New(storage)
 			api := New(logger, &Options{Hostname: "http://localhost:8080"}, usecase, storage)
 			api.Init()
@@ -129,7 +129,7 @@ func Test_api_Shorten(t *testing.T) {
 			if err != nil {
 				log.Fatalln(err)
 			}
-			storage := urlstorage.New()
+			storage := urlstorage.New("")
 			usecase := idgen.New(storage)
 			api := New(logger, &Options{Hostname: "http://localhost:8080"}, usecase, storage)
 			api.Init()

@@ -1,6 +1,7 @@
 package idgen
 
 import (
+	"log"
 	"math/rand"
 	"time"
 )
@@ -28,6 +29,7 @@ func (u *usecase) CreateShortURL(long string) (shurl string, err error) {
 	shurl = genID()
 	err = u.st.Add(shurl, long)
 	if err != nil {
+		log.Println(err)
 		return "", err
 	}
 	return shurl, nil
