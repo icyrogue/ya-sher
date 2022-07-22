@@ -135,5 +135,5 @@ func (a *api) Shorten(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err3.Error())
 		return
 	}
-	c.String(http.StatusOK, string(result))
+	c.String(http.StatusCreated, string(result))
 }
