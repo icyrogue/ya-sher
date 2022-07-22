@@ -3,6 +3,7 @@ module github.com/icyrogue/ya-sher
 go 1.17
 
 require (
+	github.com/caarlos0/env/v6 v6.9.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.8.1 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
