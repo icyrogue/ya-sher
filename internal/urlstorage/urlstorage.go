@@ -20,6 +20,7 @@ func New() *storage {
 func (st *storage) Add(id string, long string) error {
 	st.mtx.Lock()
 	defer st.mtx.Unlock()
+
 	if _, fd := st.data[id]; fd {
 		return errors.New("url with that id already exists")
 	}
