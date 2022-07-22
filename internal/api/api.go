@@ -31,6 +31,7 @@ type api struct {
 
 type Options struct {
 	Hostname string
+	BaseURL  string
 }
 
 func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage) *api {
@@ -51,7 +52,8 @@ func (a *api) Init() {
 	a.router.POST("/api/shorten", a.Shorten)
 }
 func (a *api) Run() {
-	a.router.Run()
+	re := regexp.MustCompile(`:\d*$`)
+	a.router.Run(re.FindString(a.opts.Hostname))
 
 }
 
@@ -70,7 +72,7 @@ func (a *api) CrShort(c *gin.Context) {
 		return
 	}
 	if el, errEl := a.st.GetByLong(string(req)); errEl == nil {
-		c.String(http.StatusCreated, a.opts.Hostname+"/"+el)
+		c.String(http.StatusCreated, a.opts.BaseURL+"/"+el)
 		return
 	}
 
@@ -79,7 +81,7 @@ func (a *api) CrShort(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.String(http.StatusCreated, a.opts.Hostname+"/"+url) //<-┐
+	c.String(http.StatusCreated, a.opts.BaseURL+"/"+url) //<-┐
 	//Если использовать  Path.Join, то автотест ставит ///  --┘
 }
 
@@ -129,7 +131,7 @@ func (a *api) Shorten(c *gin.Context) {
 	resURL := struct {
 		Result string `json:"result"`
 	}{
-		Result: a.opts.Hostname + "/" + shurl,
+		Result: a.opts.BaseURL + "/" + shurl,
 	}
 	if result, err3 = json.Marshal(resURL); err3 != nil {
 		c.String(http.StatusInternalServerError, err3.Error())
