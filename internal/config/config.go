@@ -1,6 +1,9 @@
 package config
 
 import (
+	"flag"
+	"os"
+
 	"github.com/caarlos0/env/v6"
 )
 
@@ -23,5 +26,14 @@ func GetOpts() (*Cfg, error) {
 	if err := env.Parse(&opts); err != nil {
 		return nil, err
 	}
+	if len(os.Args) < 2 {
+		return &opts, nil
+	}
+
+	flag.StringVar(&opts.URLOpts.Hostname, "a", "http://localhost:8080", "Hostname URL, default is localhost:8080")
+	flag.StringVar(&opts.URLOpts.BaseURL, "b", "http://localhost:8080", "Hostname URL, default is localhost:8080")
+	flag.StringVar(&opts.StrOpts.Filepath, "f", "", "Hostname URL, default is localhost:8080")
+	flag.Parse()
 	return &opts, nil
+
 }
