@@ -3,7 +3,9 @@ package urlstorage
 import (
 	"bufio"
 	"errors"
+	"log"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -19,10 +21,12 @@ func New(flPath string) *storage {
 	if flPath != "" {
 		data, err := recoverData(flPath)
 		if err != nil {
+			log.Println("Couldnt recover data from file, creating new")
 			data = make(map[string]string)
 		}
 		file, err := os.OpenFile(flPath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if err != nil {
+			log.Println("Couldnt open storage file, runing in RAM mode")
 			return &storage{Data: data}
 		}
 
@@ -48,6 +52,15 @@ func (st *storage) Add(id string, long string) error {
 		return errors.New("url with that id already exists")
 	}
 	st.Data[id] = long
+
+	if st.file != nil {
+		data := []byte(id + " " + long + "\n")
+		if _, err := st.writer.Write(data); err != nil {
+			return err
+		}
+		return st.writer.Flush()
+	}
+
 	return nil
 }
 func (st *storage) GetByID(id string) (string, error) {
@@ -69,6 +82,22 @@ func (st *storage) GetByLong(long string) (string, error) {
 	return "", errors.New("no url with such id")
 }
 
+//recoverData: tries to recover urls from previus session
 func recoverData(flPath string) (map[string]string, error) {
-	return nil, nil
+	file, err := os.Open(flPath)
+	if err != nil {
+		return nil, err
+	}
+	scaner := bufio.NewScanner(file)
+	data := make(map[string]string)
+
+	for scaner.Scan() {
+		el := strings.Split(string(scaner.Bytes()), " ")
+		data[el[0]] = el[1]
+	}
+	if len(data) == 0 {
+		return nil, errors.New("file is empty")
+	}
+
+	return data, nil
 }
