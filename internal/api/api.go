@@ -35,6 +35,13 @@ type Options struct {
 }
 
 func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage) *api {
+	df := `http://localhost:8080`
+	if opts.BaseURL == "" {
+		opts.BaseURL = df
+	}
+	if opts.Hostname == "" {
+		opts.Hostname = df
+	}
 	return &api{
 		opts:    opts,
 		logger:  logger,

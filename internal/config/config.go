@@ -1,7 +1,9 @@
 package config
 
 import (
-	"github.com/caarlos0/env/v6"
+	"flag"
+	"fmt"
+	"os"
 )
 
 type Cfg struct {
@@ -9,8 +11,8 @@ type Cfg struct {
 	StrOpts StrOpts
 }
 type URLOpts struct {
-	Hostname string `env:"SERVER_ADDRESS" envDefault:"http://localhost:8080"`
-	BaseURL  string `env:"BASE_URL" envDefault:"http://localhost:8080"`
+	Hostname string `env:"SERVER_ADDRESS,unset" envDefault:"http://localhost:8080"`
+	BaseURL  string `env:"BASE_URL,unset" envDefault:"http://localhost:8080"`
 }
 
 type StrOpts struct {
@@ -19,9 +21,15 @@ type StrOpts struct {
 
 //GetOpts gives defines options for everyone!
 func GetOpts() (*Cfg, error) {
-	opts := Cfg{}
-	if err := env.Parse(&opts); err != nil {
-		return nil, err
-	}
-	return &opts, nil
+	cfg := Cfg{}
+	flag.StringVar(&cfg.URLOpts.Hostname, "a", "http://localhost:8080", "Hostname URL")
+	flag.StringVar(&cfg.URLOpts.BaseURL, "b", "http://localhost:8080", "Base URL")
+	flag.StringVar(&cfg.StrOpts.Filepath, "f", "", "File path")
+	flag.Lookup("f").Value.Set(os.Getenv("FILE_STORAGE_PATH"))
+	flag.Lookup("a").Value.Set(os.Getenv("SERVER_ADDRESS"))
+	flag.Lookup("b").Value.Set(os.Getenv("BASE_URL"))
+	flag.Parse()
+	fmt.Println(cfg)
+	return &cfg, nil
+
 }
