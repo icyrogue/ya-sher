@@ -138,7 +138,7 @@ func (a *api) Shorten(c *gin.Context) {
 	resURL := struct {
 		Result string `json:"result"`
 	}{
-		Result: a.opts.BaseURL + "/" + shurl,
+		Result: "http://" + a.opts.BaseURL + "/" + shurl,
 	}
 	if result, err3 = json.Marshal(resURL); err3 != nil {
 		c.String(http.StatusInternalServerError, err3.Error())
