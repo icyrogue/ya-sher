@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"os"
 )
 
@@ -26,8 +27,9 @@ func GetOpts() (*Cfg, error) {
 	flag.StringVar(&cfg.StrOpts.Filepath, "f", "", "File path")
 	flag.Lookup("f").Value.Set(os.Getenv("FILE_STORAGE_PATH"))
 	flag.Lookup("a").Value.Set(os.Getenv("SERVER_ADDRESS"))
-	flag.Lookup("b").Value.Set(os.Getenv("SERVER_ADDRESS"))
+	flag.Lookup("b").Value.Set(os.Getenv("BASE_URL"))
 	flag.Parse()
+	fmt.Println(cfg)
 	return &cfg, nil
 
 }
