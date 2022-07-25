@@ -11,8 +11,8 @@ type Cfg struct {
 	StrOpts StrOpts
 }
 type URLOpts struct {
-	Hostname string `env:"SERVER_ADDRESS,unset" envDefault:"http://localhost:8080"`
-	BaseURL  string `env:"BASE_URL,unset" envDefault:"http://localhost:8080"`
+	Hostname string
+	BaseURL  string
 }
 
 type StrOpts struct {

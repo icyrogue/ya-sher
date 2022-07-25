@@ -3,10 +3,12 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/icyrogue/ya-sher/internal/idgen"
@@ -34,7 +36,7 @@ func Test_api_CrShort(t *testing.T) {
 			}
 			storage := urlstorage.New("")
 			usecase := idgen.New(storage)
-			api := New(logger, &Options{Hostname: "http://localhost:8080"}, usecase, storage)
+			api := New(logger, &Options{}, usecase, storage)
 			api.Init()
 			//Testing POST itself
 			w := httptest.NewRecorder()
@@ -56,9 +58,11 @@ func Test_api_CrShort(t *testing.T) {
 				t.Error(err.Error())
 				return
 			}
-			body = body[len(body)-8:]
-			if string(body) != shurl {
-				t.Errorf("Expected %s got %s", shurl, body)
+			fmt.Println(string(body))
+			cody := strings.SplitAfter(string(body), "/")[3]
+
+			if cody[:8] != shurl {
+				t.Errorf("Expected %v got %v", []byte(shurl), []byte(cody)[:8])
 			}
 		})
 	}
@@ -80,9 +84,10 @@ func Test_api_ReLong(t *testing.T) {
 			if err != nil {
 				log.Fatalln(err)
 			}
+			//	opts, _ := config.GetOpts()
 			storage := urlstorage.New("")
 			usecase := idgen.New(storage)
-			api := New(logger, &Options{Hostname: "http://localhost:8080"}, usecase, storage)
+			api := New(logger, &Options{}, usecase, storage)
 			api.Init()
 			//Creating mock short
 			shurl, err1 := usecase.CreateShortURL(tt.want)
@@ -129,9 +134,10 @@ func Test_api_Shorten(t *testing.T) {
 			if err != nil {
 				log.Fatalln(err)
 			}
+			//	opts, _ := config.GetOpts()
 			storage := urlstorage.New("")
 			usecase := idgen.New(storage)
-			api := New(logger, &Options{Hostname: "http://localhost:8080"}, usecase, storage)
+			api := New(logger, &Options{}, usecase, storage)
 			api.Init()
 			//Testing POST itself
 			w := httptest.NewRecorder()
