@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"fmt"
 	"os"
 )
 
@@ -11,15 +10,15 @@ type Cfg struct {
 	StrOpts StrOpts
 }
 type URLOpts struct {
-	Hostname string
-	BaseURL  string
+	Hostname string //$SERVER_ADDRESS
+	BaseURL  string //$BASE_URL
 }
 
 type StrOpts struct {
-	Filepath string `env:"FILE_STORAGE_PATH"`
+	Filepath string //$FILE_STORAGE_PATH
 }
 
-//GetOpts gives defines options for everyone!
+//GetOpts: defines options for everyone!
 func GetOpts() (*Cfg, error) {
 	cfg := Cfg{}
 	flag.StringVar(&cfg.URLOpts.Hostname, "a", "http://localhost:8080", "Hostname URL")
@@ -29,7 +28,7 @@ func GetOpts() (*Cfg, error) {
 	flag.Lookup("a").Value.Set(os.Getenv("SERVER_ADDRESS"))
 	flag.Lookup("b").Value.Set(os.Getenv("BASE_URL"))
 	flag.Parse()
-	fmt.Println(cfg)
 	return &cfg, nil
-
+	//Я перестал использовать env.Parse() -> error, но возвращение ошибки оста-
+	//вил на будущее, если что то нужно будет сделать обязательным
 }

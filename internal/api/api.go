@@ -37,14 +37,16 @@ type Options struct {
 	BaseURL  string
 }
 
+//Struct for new gzip writer
 type gzipWriter struct {
 	gin.ResponseWriter
 	writer *gzip.Writer
 }
 
+//Write string method needed for gin.conetxt.String
 func (g *gzipWriter) WriteString(s string) (int, error) {
-	g.Header().Del("Content-Length")
-	return g.writer.Write([]byte(s))
+	g.Header().Del("Content-Length") //<-- deleting Content-Length header since
+	return g.writer.Write([]byte(s)) //new length dosent match after compression
 }
 
 func (g *gzipWriter) Write(data []byte) (int, error) {
@@ -126,7 +128,6 @@ func (a *api) ReLong(c *gin.Context) {
 	c.Header("Location", key)
 	fmt.Println("key is ", key)
 	c.String(http.StatusTemporaryRedirect, key)
-	//	fmt.Println(key)
 
 }
 
@@ -168,6 +169,7 @@ func (a *api) Shorten(c *gin.Context) {
 	c.String(http.StatusCreated, string(result))
 }
 
+//mdwCompression: gzip compression middleware
 func (a *api) mdwCompression(c *gin.Context) {
 	if !strings.Contains(c.Request.Header.Get("Accept-Encoding"), "gzip") {
 		fmt.Println("normal mode")
@@ -190,6 +192,7 @@ func (a *api) mdwCompression(c *gin.Context) {
 	//	return
 }
 
+//mdwDecompression: gzip decompression middleware
 func (a *api) mdwDecompression(c *gin.Context) {
 	if !strings.Contains(c.Request.Header.Get("Content-Encoding"), "gzip") {
 		c.Next()
@@ -206,7 +209,7 @@ func (a *api) mdwDecompression(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	} */
-	c.Writer.Header().Del("Content-Length")
+	c.Writer.Header().Del("Content-Length") //<-- otherwise corruption occurs
 	c.Request.Body = ioutil.NopCloser(gz)
 	c.Next()
 }

@@ -24,4 +24,5 @@ func main() {
 	api := api.New(logger, &api.Options{Hostname: opts.URLOpts.Hostname, BaseURL: opts.URLOpts.BaseURL}, usecase, storage)
 	api.Init()
 	api.Run()
+	defer storage.Close()
 }

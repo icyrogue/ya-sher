@@ -25,6 +25,7 @@ func New(flPath string) *storage {
 			data = make(map[string]string)
 		}
 		file, err := os.OpenFile(flPath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
+		//defer file.Close() /*TODO: возможно стоит добавить отдельную функцию к структуре, котрая бы закрывала файл и вынести ее в мейн*/
 		if err != nil {
 			log.Println("Couldnt open storage file, runing in RAM mode")
 			return &storage{Data: data}
@@ -41,6 +42,10 @@ func New(flPath string) *storage {
 	return &storage{
 		Data: make(map[string]string),
 	}
+}
+
+func (st *storage) Close() {
+	st.file.Close()
 }
 
 //AddToStorage: adds url to mock database
@@ -63,6 +68,8 @@ func (st *storage) Add(id string, long string) error {
 
 	return nil
 }
+
+//TODO: возможно стоит заставить и все остольные функции storage взаимодействовать с файлом, тогда можно не выгружать все в память, но, с другой стороны, у нас там дальше нужно будет базу данных добавить, поэтому я не знаю
 func (st *storage) GetByID(id string) (string, error) {
 	st.mtx.RLock()
 	defer st.mtx.RUnlock()
