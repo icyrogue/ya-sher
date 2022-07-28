@@ -7,17 +7,28 @@ import (
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/icyrogue/ya-sher/internal/config"
 )
 
 type storage struct {
-	Data   map[string]string
-	mtx    sync.RWMutex
-	writer *bufio.Writer
-	reader *bufio.Reader
-	file   *os.File
+	data    map[string]string
+	mtx     sync.RWMutex
+	writer  *bufio.Writer
+	reader  *bufio.Reader
+	file    *os.File
+	Options *config.StrOpts
 }
 
-func New(flPath string) *storage {
+func New() *storage {
+	return &storage{}
+}
+
+func (st *storage) Init() {
+	flPath := ""
+	if st.Options != nil {
+		flPath = st.Options.Filepath
+	}
 	if flPath != "" {
 		data, err := recoverData(flPath)
 		if err != nil {
@@ -28,20 +39,17 @@ func New(flPath string) *storage {
 		//defer file.Close() /*TODO: возможно стоит добавить отдельную функцию к структуре, котрая бы закрывала файл и вынести ее в мейн*/
 		if err != nil {
 			log.Println("Couldnt open storage file, runing in RAM mode")
-			return &storage{Data: data}
+			st.data = data
+			return
 		}
 
-		return &storage{
-			Data:   data,
-			writer: bufio.NewWriter(file),
-			reader: bufio.NewReader(file),
-			file:   file,
-		}
+		st.data = data
+		st.file = file
+		st.writer = bufio.NewWriter(file)
+		st.reader = bufio.NewReader(file)
+		return
 	}
-
-	return &storage{
-		Data: make(map[string]string),
-	}
+	st.data = make(map[string]string)
 }
 
 func (st *storage) Close() {
@@ -53,10 +61,10 @@ func (st *storage) Add(id string, long string) error {
 	st.mtx.Lock()
 	defer st.mtx.Unlock()
 
-	if _, fd := st.Data[id]; fd {
+	if _, fd := st.data[id]; fd {
 		return errors.New("url with that id already exists")
 	}
-	st.Data[id] = long
+	st.data[id] = long
 
 	if st.file != nil {
 		data := []byte(id + " " + long + "\n")
@@ -74,14 +82,14 @@ func (st *storage) GetByID(id string) (string, error) {
 	st.mtx.RLock()
 	defer st.mtx.RUnlock()
 
-	if _, fd := st.Data[id]; fd {
-		var long = st.Data[id]
+	if _, fd := st.data[id]; fd {
+		var long = st.data[id]
 		return long, nil
 	}
 	return "", errors.New("no url with such ID")
 }
 func (st *storage) GetByLong(long string) (string, error) {
-	for id, el := range st.Data {
+	for id, el := range st.data {
 		if el == long {
 			return id, nil
 		}

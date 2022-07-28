@@ -34,7 +34,8 @@ func Test_api_CrShort(t *testing.T) {
 			if err != nil {
 				log.Fatalln(err)
 			}
-			storage := urlstorage.New("")
+			storage := urlstorage.New()
+			storage.Init()
 			usecase := idgen.New(storage)
 			api := New(logger, &Options{}, usecase, storage)
 			api.Init()
@@ -85,7 +86,8 @@ func Test_api_ReLong(t *testing.T) {
 				log.Fatalln(err)
 			}
 			//	opts, _ := config.GetOpts()
-			storage := urlstorage.New("")
+			storage := urlstorage.New()
+			storage.Init()
 			usecase := idgen.New(storage)
 			api := New(logger, &Options{}, usecase, storage)
 			api.Init()
@@ -135,16 +137,15 @@ func Test_api_Shorten(t *testing.T) {
 				log.Fatalln(err)
 			}
 			//	opts, _ := config.GetOpts()
-			storage := urlstorage.New("")
+			storage := urlstorage.New()
+			storage.Init()
 			usecase := idgen.New(storage)
 			api := New(logger, &Options{}, usecase, storage)
 			api.Init()
 			//Testing POST itself
 			w := httptest.NewRecorder()
-			wantJSON := struct {
-				Want string `json:"url"`
-			}{
-				Want: tt.want,
+			wantJSON := jsonURL{
+				URL: tt.want,
 			}
 
 			reqJSON, errJ := json.Marshal(wantJSON)
@@ -161,23 +162,21 @@ func Test_api_Shorten(t *testing.T) {
 				t.Errorf("Expected %d got %d", tt.wantedCode, res.StatusCode)
 			}
 			defer res.Body.Close()
-			body, err1 := ioutil.ReadAll(res.Body)
-			if err1 != nil {
-				t.Error(err1)
+			body, err := ioutil.ReadAll(res.Body)
+			if err != nil {
+				t.Error(err)
 			}
-			bodyJSON := struct {
-				URL string `json:"result"`
-			}{}
+			bodyJSON := jsonResult{}
 
-			if errJ2 := json.Unmarshal(body, &bodyJSON); errJ2 != nil {
-				log.Fatal(errJ2)
+			if err := json.Unmarshal(body, &bodyJSON); err != nil {
+				log.Fatal(err)
 			}
-			shurl, err2 := storage.GetByLong(tt.want)
-			if err2 != nil {
+			shurl, err := storage.GetByLong(tt.want)
+			if err != nil {
 				t.Error(err.Error())
 				return
 			}
-			body = []byte(bodyJSON.URL)
+			body = []byte(bodyJSON.Result)
 			body = body[len(body)-8:]
 			if string(body) != shurl {
 				t.Errorf("Expected %s got %s", shurl, body)

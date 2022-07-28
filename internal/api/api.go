@@ -13,6 +13,15 @@ import (
 	"go.uber.org/zap"
 )
 
+//JSON models
+type jsonURL struct {
+	URL string `json:"url"`
+}
+
+type jsonResult struct {
+	Result string `json:"result"`
+}
+
 //URLProcessor interface for creating short url using idgen business logic
 type URLProcessor interface {
 	CreateShortURL(long string) (shurl string, err error)
@@ -133,33 +142,29 @@ func (a *api) ReLong(c *gin.Context) {
 
 //Shorten: gives back json short link
 func (a *api) Shorten(c *gin.Context) {
-	type tmp struct {
-		URL string `json:"url"`
-	}
 
-	url := tmp{}
+	url := jsonURL{}
 	res := c.Request.Body
 
 	defer res.Close()
 	body, err := ioutil.ReadAll(res)
 	if err != nil {
 		a.logger.Error("couldnt read request")
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 	json.Unmarshal(body, &url)
 
 	c.Header("Content-Type", "application/json")
-	shurl, err2 := a.urlProc.CreateShortURL(url.URL)
+	shurl, err := a.urlProc.CreateShortURL(url.URL)
 
-	if err2 != nil {
-		c.String(http.StatusInternalServerError, err2.Error())
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 	var result []byte
 	var err3 error
-	resURL := struct {
-		Result string `json:"result"`
-	}{
+	resURL := jsonResult{
 		Result: a.opts.BaseURL + "/" + shurl,
 	}
 	if result, err3 = json.Marshal(resURL); err3 != nil {

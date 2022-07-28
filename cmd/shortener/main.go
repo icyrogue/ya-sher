@@ -19,7 +19,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	storage := urlstorage.New(opts.StrOpts.Filepath)
+	storage := urlstorage.New()
+	storage.Options = &opts.StrOpts
+	storage.Init()
 	usecase := idgen.New(storage)
 	api := api.New(logger, &api.Options{Hostname: opts.URLOpts.Hostname, BaseURL: opts.URLOpts.BaseURL}, usecase, storage)
 	api.Init()
