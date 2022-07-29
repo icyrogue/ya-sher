@@ -65,6 +65,12 @@ func (g *gzipWriter) Write(data []byte) (int, error) {
 
 func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage) *api {
 	df := `http://localhost:8080`
+	if opts == nil {
+		opts = &Options{
+			BaseURL:  df,
+			Hostname: df,
+		}
+	}
 	if opts.BaseURL == "" {
 		opts.BaseURL = df
 	}
@@ -80,7 +86,6 @@ func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage) *a
 }
 
 func (a *api) Init() {
-
 	gin.SetMode(gin.ReleaseMode)
 	a.router = gin.New()
 	a.router.Use(a.mdwDecompression, a.mdwCompression)
@@ -150,10 +155,15 @@ func (a *api) Shorten(c *gin.Context) {
 	body, err := ioutil.ReadAll(res)
 	if err != nil {
 		a.logger.Error("couldnt read request")
-		c.String(http.StatusInternalServerError, err.Error())
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	json.Unmarshal(body, &url)
+	err = json.Unmarshal(body, &url)
+	if err != nil {
+		a.logger.Error(err.Error())
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
 
 	c.Header("Content-Type", "application/json")
 	shurl, err := a.urlProc.CreateShortURL(url.URL)

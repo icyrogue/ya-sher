@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 )
@@ -34,9 +35,13 @@ func (st *storage) Init() {
 	if flPath != "" {
 		data, err := recoverData(flPath)
 		if err != nil {
-			log.Println("Couldnt recover data from file, creating new")
-			data = make(map[string]string)
+			log.Println(err.Error())
+			if err.Error() == "file is empty" {
+				log.Println("Couldnt recover data from file, creating new")
+				data = make(map[string]string)
+			}
 		}
+
 		file, err := os.OpenFile(flPath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		//defer file.Close() /*TODO: возможно стоит добавить отдельную функцию к структуре, котрая бы закрывала файл и вынести ее в мейн*/
 		if err != nil {
@@ -110,6 +115,13 @@ func recoverData(flPath string) (map[string]string, error) {
 
 	for scaner.Scan() {
 		el := strings.Split(string(scaner.Bytes()), " ")
+		if len(el) < 2 {
+			return data, errors.New("encountered corrupted data")
+		}
+		re := regexp.MustCompile(`([A-Z]|[a-z]|[0-9]){8}`)
+		if !re.MatchString(el[0]) {
+			return data, errors.New("encountered corrupted data")
+		}
 		data[el[0]] = el[1]
 	}
 	if len(data) == 0 {

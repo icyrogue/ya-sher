@@ -23,7 +23,7 @@ func main() {
 	storage.Options = opts.StrOpts
 	storage.Init()
 	usecase := idgen.New(storage)
-	api := api.New(logger, &api.Options{Hostname: opts.URLOpts.Hostname, BaseURL: opts.URLOpts.BaseURL}, usecase, storage)
+	api := api.New(logger, opts.URLOpts, usecase, storage)
 	api.Init()
 	api.Run()
 	defer storage.Close()
