@@ -106,12 +106,13 @@ func (st *storage) GetByLong(long string) (string, error) {
 
 //recoverData: tries to recover urls from previus session
 func recoverData(flPath string) (map[string]string, error) {
+	data := make(map[string]string)
+
 	file, err := os.Open(flPath)
 	if err != nil {
 		return nil, err
 	}
 	scaner := bufio.NewScanner(file)
-	data := make(map[string]string)
 
 	for scaner.Scan() {
 		el := strings.Split(string(scaner.Bytes()), " ")
