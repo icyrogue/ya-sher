@@ -110,7 +110,7 @@ func recoverData(flPath string) (map[string]string, error) {
 
 	file, err := os.Open(flPath)
 	if err != nil {
-		return nil, err
+		return data, err
 	}
 	scaner := bufio.NewScanner(file)
 
