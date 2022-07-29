@@ -163,12 +163,11 @@ func (a *api) Shorten(c *gin.Context) {
 		return
 	}
 	var result []byte
-	var err3 error
 	resURL := jsonResult{
 		Result: a.opts.BaseURL + "/" + shurl,
 	}
-	if result, err3 = json.Marshal(resURL); err3 != nil {
-		c.String(http.StatusInternalServerError, err3.Error())
+	if result, err = json.Marshal(resURL); err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.String(http.StatusCreated, string(result))

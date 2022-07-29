@@ -3,19 +3,14 @@ package config
 import (
 	"flag"
 	"os"
+
+	"github.com/icyrogue/ya-sher/internal/api"
+	"github.com/icyrogue/ya-sher/internal/urlstorage"
 )
 
 type Cfg struct {
-	URLOpts URLOpts
-	StrOpts StrOpts
-}
-type URLOpts struct {
-	Hostname string //$SERVER_ADDRESS
-	BaseURL  string //$BASE_URL
-}
-
-type StrOpts struct {
-	Filepath string //$FILE_STORAGE_PATH
+	URLOpts *api.Options
+	StrOpts *urlstorage.Options
 }
 
 //GetOpts: defines options for everyone!

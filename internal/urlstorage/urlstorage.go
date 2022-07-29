@@ -7,8 +7,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-
-	"github.com/icyrogue/ya-sher/internal/config"
 )
 
 type storage struct {
@@ -17,7 +15,11 @@ type storage struct {
 	writer  *bufio.Writer
 	reader  *bufio.Reader
 	file    *os.File
-	Options *config.StrOpts
+	Options *Options
+}
+
+type Options struct {
+	Filepath string
 }
 
 func New() *storage {
