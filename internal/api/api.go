@@ -308,5 +308,6 @@ func (a *api) getAllUserURLs(c *gin.Context) {
 		c.String(http.StatusOK, string(res))
 		return
 	}
+	c.Header("Content-Type", "application/json")
 	c.String(http.StatusNoContent, err.Error())
 }
