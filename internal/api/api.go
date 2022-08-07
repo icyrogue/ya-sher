@@ -148,7 +148,7 @@ func (a *api) CrShort(c *gin.Context) {
 	if err != nil {
 		println(err.Error())
 	}
-	c.String(http.StatusOK, a.opts.BaseURL + "/" + url)
+	c.String(http.StatusCreated, a.opts.BaseURL + "/" + url)
 
 
 }
@@ -173,6 +173,8 @@ func (a *api) ReLong(c *gin.Context) {
 
 //Shorten: gives back json short link
 func (a *api) Shorten(c *gin.Context) {
+
+	cookie := fmt.Sprint(c.MustGet("cookie"))
 
 	url := jsonURL{}
 	res := c.Request.Body
@@ -206,6 +208,7 @@ func (a *api) Shorten(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
+	err = a.userManager.AddUserURL(cookie, url.URL, shurl)
 	c.String(http.StatusCreated, string(result))
 }
 
