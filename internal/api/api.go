@@ -301,7 +301,7 @@ func (a *api) getAllUserURLs(c *gin.Context) {
 	}
 	for short, long := range(urls) {
 		touples = append(touples, jsonURLTouple{
-			Short: short,
+			Short: a.opts.BaseURL + `/` + short,
 			Long: long,
 		})
 		fmt.Println(short, long)
