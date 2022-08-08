@@ -23,7 +23,7 @@ func New() *storage {
 }
 
 func (st *storage) Init() {
-	db, err := sql.Open("postgres", "postgres://postgres:***@5432/praktikum?sslmode=disable" )
+	db, err := sql.Open("postgres", "postgres://postgres:***@127.0.0.1:5432/praktikum?sslmode=disable" )
 	if err != nil {
 		log.Fatal(err)
 		return
