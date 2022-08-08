@@ -28,11 +28,11 @@ db, err := sql.Open("postgres", st.Options.DBPath)
 		log.Fatal(err)
 		return
 	}
-	// _, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT);`)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return
-	// }
+	_, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT);`)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 st.db = db
 }
 
@@ -53,14 +53,14 @@ func (st *storage) Add(id string, long string) error {
 		println(err)
 		return err
 	}
-	rows, err := st.db.Query(`SELECT * FROM urls`)
-	if err != nil {
-println(err)}
-	var str string
-	for rows.Next() {
-		rows.Scan(&str)
-		println(str)
-	}
+// 	rows, err := st.db.Query(`SELECT * FROM urls`)
+// 	if err != nil {
+// println(err)}
+// 	var str string
+// 	for rows.Next() {
+// 		rows.Scan(&str)
+// 		println(str)
+// 	}
 	return nil
 }
 
