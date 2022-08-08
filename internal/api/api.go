@@ -136,8 +136,9 @@ func (a *api) CrShort(c *gin.Context) {
 		c.String(http.StatusBadRequest, "This isn't an URL!")
 		return
 	}
-	if el, errEl := a.st.GetByLong(string(req), c); errEl == nil {
+	if el, err := a.st.GetByLong(string(req), c); err == nil {
 		a.userManager.AddUserURL(fmt.Sprint(cookie), string(req), el)
+		fmt.Println(a.st.GetByLong(string(req), c))
 		c.String(http.StatusCreated, a.opts.BaseURL+"/"+el)
 		return
 	}

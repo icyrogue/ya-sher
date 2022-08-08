@@ -34,6 +34,7 @@ func main() {
 	api.Init()
 	api.Run()
 	defer storage.Close()
+	return
 	} else {
 	storage := dbstorage.New()
 	storage.Options = opts.DBOpts
