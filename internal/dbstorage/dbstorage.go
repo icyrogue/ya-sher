@@ -28,11 +28,11 @@ db, err := sql.Open("postgres", st.Options.DBPath)
 		log.Fatal(err)
 		return
 	}
-	_, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT);`)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
+	// _, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT);`)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// 	return
+	// }
 st.db = db
 }
 
