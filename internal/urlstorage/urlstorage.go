@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+
+	"golang.org/x/net/context"
 )
 
 type storage struct {
@@ -85,7 +87,8 @@ func (st *storage) Add(id string, long string) error {
 }
 
 //TODO: возможно стоит заставить и все остольные функции storage взаимодействовать с файлом, тогда можно не выгружать все в память, но, с другой стороны, у нас там дальше нужно будет базу данных добавить, поэтому я не знаю
-func (st *storage) GetByID(id string) (string, error) {
+func (st *storage) GetByID(id string, ctx context.Context) (string, error) {
+	_ = ctx
 	st.mtx.RLock()
 	defer st.mtx.RUnlock()
 
@@ -95,7 +98,7 @@ func (st *storage) GetByID(id string) (string, error) {
 	}
 	return "", errors.New("no url with such ID")
 }
-func (st *storage) GetByLong(long string) (string, error) {
+func (st *storage) GetByLong(long string, ctx context.Context) (string, error) {
 	for id, el := range st.data {
 		if el == long {
 			return id, nil
@@ -130,4 +133,8 @@ func recoverData(flPath string) (map[string]string, error) {
 	}
 
 	return data, nil
+}
+
+func (st *storage) Ping(ctx context.Context) bool {
+	return false
 }

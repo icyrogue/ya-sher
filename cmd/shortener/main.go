@@ -5,8 +5,10 @@ import (
 
 	"github.com/icyrogue/ya-sher/internal/api"
 	"github.com/icyrogue/ya-sher/internal/config"
+	"github.com/icyrogue/ya-sher/internal/dbstorage"
 	"github.com/icyrogue/ya-sher/internal/idgen"
 	"github.com/icyrogue/ya-sher/internal/urlstorage"
+	"github.com/icyrogue/ya-sher/internal/usermanager"
 	"go.uber.org/zap"
 )
 
@@ -18,13 +20,29 @@ func main() {
 	opts, err := config.GetOpts()
 	if err != nil {
 		log.Fatal(err)
+}
+	usermanager, err := usermanager.New()
+	if err != nil {
+		log.Fatal(err)
 	}
+	if opts.DBOpts.DBPath == "" {
 	storage := urlstorage.New()
 	storage.Options = opts.StrOpts
-	storage.Init()
 	usecase := idgen.New(storage)
-	api := api.New(logger, opts.URLOpts, usecase, storage)
+	api := api.New(logger, opts.URLOpts, usecase, storage, usermanager)
+	storage.Init()
 	api.Init()
 	api.Run()
 	defer storage.Close()
+	return
+	} else {
+	storage := dbstorage.New()
+	storage.Options = opts.DBOpts
+	usecase := idgen.New(storage)
+	api := api.New(logger, opts.URLOpts, usecase, storage, usermanager)
+	storage.Init()
+	api.Init()
+	api.Run()
+	defer storage.Close()
+	}
 }
