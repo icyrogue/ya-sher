@@ -53,14 +53,14 @@ func (st *storage) Add(id string, long string) error {
 		println(err)
 		return err
 	}
-// 	rows, err := st.db.Query(`SELECT * FROM urls`)
-// 	if err != nil {
-// println(err)}
-// 	var str string
-// 	for rows.Next() {
-// 		rows.Scan(&str)
-// 		println(str)
-// 	}
+	rows, err := st.db.Query(`SELECT * FROM urls`)
+	if err != nil {
+println(err)}
+	var str string
+	for rows.Next() {
+		rows.Scan(&str)
+		println(str)
+	}
 	return nil
 }
 
