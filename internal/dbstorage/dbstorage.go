@@ -30,7 +30,7 @@ func (st *storage) Init() {
 			},
 		}
 		stdlib.RegisterDriverConfig(&driverConfig)
-db, err := sql.Open("pgx", driverConfig.ConnectionString("postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable"))
+db, err := sql.Open("pgx", driverConfig.ConnectionString("postgres://postgres:postgres@127.0.0.1:5432/praktikum?sslmode=disable"))
 	if err != nil {
 		log.Fatal(err)
 		return
