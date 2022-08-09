@@ -30,15 +30,15 @@ func (st *storage) Init() {
 			},
 		}
 		stdlib.RegisterDriverConfig(&driverConfig)
-db, err := sql.Open("pgx", driverConfig.ConnectionString("postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable"))
+db, err := sql.Open("pgx", driverConfig.ConnectionString("postgres://postgres:postgres@127.0.0.1:5432/praktikum?sslmode=disable"))
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 	_, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT);`)
 	if err != nil {
-		log.Fatal(err)
-		return
+		log.Println(err)
+		//	return
 	}
 st.db = db
 }
@@ -55,11 +55,11 @@ func (st *storage) Close() {
 }
 
 func (st *storage) Add(id string, long string) error {
-	// _, err := st.db.Exec(`INSERT INTO urls(id, long) VALUES($1, $2)`, id, long )
-	// if err != nil {
-	// 	println(err)
-	// 	return err
-	// }
+	_, err := st.db.Exec(`INSERT INTO urls(id, long) VALUES($1, $2)`, id, long )
+	if err != nil {
+		println(err)
+		return err
+	}
 // 	rows, err := st.db.Query(`SELECT * FROM urls`)
 // 	if err != nil {
 // println(err)}
@@ -68,7 +68,7 @@ func (st *storage) Add(id string, long string) error {
 // 		rows.Scan(&str)
 // 		println(str)
 // 	}
-	return nil
+return nil
 }
 
 func (st *storage) GetByID(id string, ctx context.Context) (string, error) {
