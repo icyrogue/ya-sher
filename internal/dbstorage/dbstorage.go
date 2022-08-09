@@ -117,7 +117,7 @@ func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
 	}
 	defer stmt.Close()
 	for _, el := range(data) {
-		_, err := stmt.Exec(el.Short, el.URL, el.CrlID)
+		_, err := stmt.Exec(el.Short[len(el.Short)-8:], el.URL, el.CrlID)
 		if err != nil {
 		log.Println("2", err)
 		return err
