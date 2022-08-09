@@ -22,9 +22,14 @@ type jsonResult = jsonmodels.JSONResult
 
 type jsonURLTouple = jsonmodels.JSONURLTouple
 
+type jsonBlkIn = jsonmodels.JSONBulkInput
+
+type jsonBlkOut = jsonmodels.JSONBulkOutput
+
 //URLProcessor interface for creating short url using idgen business logic
 type URLProcessor interface {
 	CreateShortURL(long string) (shurl string, err error)
+	BulkCreation(data []jsonBlkIn, baseURL string) ([]jsonBlkIn, error)
 }
 
 //Storage interface for interfacing with storage
@@ -104,6 +109,7 @@ func (a *api) Init() {
 	a.router.POST("/api/shorten", a.Shorten)
 	a.router.GET("/api/user/urls", a.getAllUserURLs)
 	a.router.GET("/ping", a.pingDB)
+	a.router.POST("/api/shorten/batch", a.convertBulk)
 }
 func (a *api) Run() {
 	re := regexp.MustCompile(`:\d*$`)
@@ -317,4 +323,43 @@ func (a *api) pingDB(c *gin.Context) {
 		return
 	}
 	c.String(http.StatusInternalServerError, "" )
+}
+
+
+func (a *api) convertBulk(c *gin.Context) {
+	defer c.Request.Body.Close()
+
+	body, err := ioutil.ReadAll(c.Request.Body)
+
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	input := []jsonBlkIn{}
+	raw := []jsonBlkIn{}
+	var output []byte
+
+	if err = json.Unmarshal(body, &input); err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+	if raw, err = a.urlProc.BulkCreation(input, a.opts.BaseURL); err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	fmt.Println(raw)
+
+	if output, err = json.Marshal(&raw); err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+
+
+	c.Header("Content-Type", "application/json")
+	c.String(http.StatusCreated, string(output))
+
+
 }
