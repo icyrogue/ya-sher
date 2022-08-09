@@ -6,7 +6,8 @@ import (
 	"errors"
 	"log"
 
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/stdlib"
 )
 
 type storage struct {
@@ -23,16 +24,23 @@ func New() *storage {
 }
 
 func (st *storage) Init() {
-db, err := sql.Open("postgres", st.Options.DBPath)
+	driverConfig := stdlib.DriverConfig{
+			ConnConfig: pgx.ConnConfig{
+				PreferSimpleProtocol: true,
+			},
+		}
+	stdlib.RegisterDriverConfig(&driverConfig)
+	/*Я вот эту вот всю штуку взял из кода автотестов, потому что у меня два дня не открывалась бд при тестах
+	  проблема была в парсинге пути, но код автотестов же умные дяденьки написали, они знают, как лучше сделать*/
+db, err := sql.Open("pgx", driverConfig.ConnectionString(st.Options.DBPath))
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	// _, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT);`)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return
-	// }
+	_, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT);`) //TODO возможно нужна какая то проверка, если таблица
+	if err != nil {												   // уже существует
+		log.Println(err)
+	}
 st.db = db
 }
 
@@ -48,20 +56,12 @@ func (st *storage) Close() {
 }
 
 func (st *storage) Add(id string, long string) error {
-	_, err := st.db.Exec(`INSERT INTO urls(id, long) VALUES($1, $2)`, id, long )
-	if err != nil {
+	_, err := st.db.Exec(`INSERT INTO urls(id, long) VALUES($1, $2)`, id, long ) //TODO возможно сделать тоже самое с транзакциями,
+	if err != nil {																// которые заготавливаются в Init()
 		println(err)
 		return err
 	}
-// 	rows, err := st.db.Query(`SELECT * FROM urls`)
-// 	if err != nil {
-// println(err)}
-// 	var str string
-// 	for rows.Next() {
-// 		rows.Scan(&str)
-// 		println(str)
-// 	}
-	return nil
+return nil
 }
 
 func (st *storage) GetByID(id string, ctx context.Context) (string, error) {

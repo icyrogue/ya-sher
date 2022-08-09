@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"log"
 	"os"
 
 	"github.com/icyrogue/ya-sher/internal/api"
@@ -31,6 +32,7 @@ func GetOpts() (*Cfg, error) {
 	flag.Lookup("b").Value.Set(os.Getenv("BASE_URL"))
 	flag.Lookup("d").Value.Set(os.Getenv("DATABASE_DSN"))
 	flag.Parse()
+	log.Println(cfg.DBOpts)
 	return &cfg, nil
 	//Я перестал использовать env.Parse() -> error, но возвращение ошибки оста-
 	//вил на будущее, если что то нужно будет сделать обязательным
