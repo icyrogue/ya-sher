@@ -23,16 +23,16 @@ func New() *storage {
 }
 
 func (st *storage) Init() {
-	db, err := sql.Open("postgres", "postgresql://postgres:***@127.0.0.1:5432/praktikum?sslmode=disable" )
+db, err := sql.Open("postgres", "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	_, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT);`)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
+	// _, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT);`)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// 	return
+	// }
 st.db = db
 }
 
