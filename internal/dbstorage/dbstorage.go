@@ -2,14 +2,16 @@ package dbstorage
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"log"
 
-	"github.com/jackc/pgx/v4"
+"github.com/jackc/pgx"
+	"github.com/jackc/pgx/stdlib"
 )
 
 type storage struct {
-	db *pgx.Conn
+	db *sql.DB
 	Options *Options
 }
 
@@ -22,12 +24,18 @@ func New() *storage {
 }
 
 func (st *storage) Init() {
-db, err := pgx.Connect(context.Background(), "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable")
+	driverConfig := stdlib.DriverConfig{
+			ConnConfig: pgx.ConnConfig{
+				PreferSimpleProtocol: true,
+			},
+		}
+		stdlib.RegisterDriverConfig(&driverConfig)
+db, err := sql.Open("pgx", driverConfig.ConnectionString("postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable"))
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	_, err = db.Exec(context.Background(), `CREATE TABLE urls("id" TEXT, "long" TEXT);`)
+	_, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT);`)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -36,18 +44,18 @@ st.db = db
 }
 
 func (st *storage) Ping(ctx context.Context) bool {
-	if err := st.db.Ping(ctx); err != nil {
+	if err := st.db.PingContext(ctx); err != nil {
 		return false
 	}
 	return true
 }
 
 func (st *storage) Close() {
-	st.db.Close(context.Background())
+	st.db.Close()
 }
 
 func (st *storage) Add(id string, long string) error {
-	_, err := st.db.Exec(context.Background(), `INSERT INTO urls(id, long) VALUES($1, $2)`, id, long )
+	_, err := st.db.Exec(`INSERT INTO urls(id, long) VALUES($1, $2)`, id, long )
 	if err != nil {
 		println(err)
 		return err
@@ -64,7 +72,7 @@ func (st *storage) Add(id string, long string) error {
 }
 
 func (st *storage) GetByID(id string, ctx context.Context) (string, error) {
-	row, err := st.db.Query(ctx, `SELECT long FROM urls WHERE id = $1`, id)
+	row, err := st.db.QueryContext(ctx, `SELECT long FROM urls WHERE id = $1`, id)
 	if err != nil {
 		return "", err
 	}
@@ -82,7 +90,7 @@ func (st *storage) GetByID(id string, ctx context.Context) (string, error) {
 }
 
 func (st *storage) GetByLong(long string, ctx context.Context) (string, error) {
-	row, err := st.db.Query(ctx, `SELECT id FROM urls WHERE long = $1`, long)
+	row, err := st.db.QueryContext(ctx, `SELECT id FROM urls WHERE long = $1`, long)
 	if err != nil {
 		return "", err
 	}
