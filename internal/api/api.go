@@ -10,23 +10,17 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/icyrogue/ya-sher/internal/jsonmodels"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 )
 
-//JSON models
-type jsonURL struct {
-	URL string `json:"url"`
-}
+//JSON model aliases
+type jsonURL = jsonmodels.JSONURL
 
-type jsonResult struct {
-	Result string `json:"result"`
-}
+type jsonResult = jsonmodels.JSONResult
 
-type jsonURLTouple struct {
-	Short string `json:"short_url"`
-	Long string `json:"original_url"`
-}
+type jsonURLTouple = jsonmodels.JSONURLTouple
 
 //URLProcessor interface for creating short url using idgen business logic
 type URLProcessor interface {
