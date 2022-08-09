@@ -122,7 +122,7 @@ func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
 		log.Println("2", err)
 		return err
 	}
-
+		//TODO нормально ошибки
 	}
 	  if err := tx.Commit(); err != nil {
         log.Fatalf("update drivers: unable to commit: %v", err)
