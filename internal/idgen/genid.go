@@ -38,6 +38,7 @@ func (u *usecase) CreateShortURL(long string) (shurl string, err error) {
 	return shurl, nil
 }
 
+//BulkCreation: create multiple ids and append to database
 func (u usecase) BulkCreation(data []jsonmodels.JSONBulkInput, baseURL string) ([]jsonmodels.JSONBulkInput, error) {
 	for i := range(data){
 		el := &data[i]
