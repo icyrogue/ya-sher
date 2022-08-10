@@ -139,7 +139,7 @@ func (a *api) CrShort(c *gin.Context) {
 	if el, err := a.st.GetByLong(string(req), c); err == nil {
 		a.userManager.AddUserURL(fmt.Sprint(cookie), string(req), el)
 		fmt.Println(a.st.GetByLong(string(req), c))
-		c.String(http.StatusCreated, a.opts.BaseURL+"/"+el)
+		c.String(http.StatusConflict, a.opts.BaseURL+"/"+el)
 		return
 	}
 
@@ -194,6 +194,10 @@ func (a *api) Shorten(c *gin.Context) {
 	if err != nil {
 		a.logger.Error(err.Error())
 		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+	if el, err := a.st.GetByLong(url.URL, c); err == nil {
+		c.String(http.StatusConflict, el)
 		return
 	}
 

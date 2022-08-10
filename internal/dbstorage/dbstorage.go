@@ -57,8 +57,9 @@ func (st *storage) Close() {
 }
 
 func (st *storage) Add(id string, long string) error {
-	_, err := st.db.Exec(`INSERT INTO urls(id, long) VALUES($1, $2)`, id, long ) //TODO возможно сделать тоже самое с транзакциями,
+	_, err := st.db.Exec(`INSERT INTO urls(id, long) VALUES($1, $2) ON CONFLICT`, id, long ) //TODO возможно сделать тоже самое с транзакциями,
 	if err != nil {																// которые заготавливаются в Init()
+		println("AAAAAAA")
 		println(err)
 		return err
 	}
