@@ -13,6 +13,7 @@ import (
 
 	"github.com/icyrogue/ya-sher/internal/idgen"
 	"github.com/icyrogue/ya-sher/internal/urlstorage"
+	"github.com/icyrogue/ya-sher/internal/usermanager"
 	"go.uber.org/zap"
 )
 
@@ -37,7 +38,11 @@ func Test_api_CrShort(t *testing.T) {
 			storage := urlstorage.New()
 			storage.Init()
 			usecase := idgen.New(storage)
-			api := New(logger, &Options{}, usecase, storage)
+			usermanager, err := usermanager.New()
+			if err != nil {
+				log.Fatal(err)
+			}
+			api := New(logger, &Options{}, usecase, storage, usermanager)
 			api.Init()
 			//Testing POST itself
 			w := httptest.NewRecorder()
@@ -54,7 +59,7 @@ func Test_api_CrShort(t *testing.T) {
 			if err1 != nil {
 				t.Error(err1)
 			}
-			shurl, err2 := storage.GetByLong(tt.want)
+			shurl, err2 := storage.GetByLong(tt.want, req.Context())
 			if err2 != nil {
 				t.Error(err.Error())
 				return
@@ -89,7 +94,11 @@ func Test_api_ReLong(t *testing.T) {
 			storage := urlstorage.New()
 			storage.Init()
 			usecase := idgen.New(storage)
-			api := New(logger, &Options{}, usecase, storage)
+			usermanager, err := usermanager.New()
+			if err != nil {
+				log.Fatal(err)
+			}
+			api := New(logger, &Options{}, usecase, storage, usermanager)
 			api.Init()
 			//Creating mock short
 			shurl, err1 := usecase.CreateShortURL(tt.want)
@@ -140,7 +149,11 @@ func Test_api_Shorten(t *testing.T) {
 			storage := urlstorage.New()
 			storage.Init()
 			usecase := idgen.New(storage)
-			api := New(logger, &Options{}, usecase, storage)
+			usermanager, err := usermanager.New()
+			if err != nil {
+				log.Fatalln(err)
+			}
+			api := New(logger, &Options{}, usecase, storage, usermanager)
 			api.Init()
 			//Testing POST itself
 			w := httptest.NewRecorder()
@@ -171,7 +184,7 @@ func Test_api_Shorten(t *testing.T) {
 			if err := json.Unmarshal(body, &bodyJSON); err != nil {
 				log.Fatal(err)
 			}
-			shurl, err := storage.GetByLong(tt.want)
+			shurl, err := storage.GetByLong(tt.want, req.Context())
 			if err != nil {
 				t.Error(err.Error())
 				return

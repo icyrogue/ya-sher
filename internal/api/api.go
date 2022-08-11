@@ -20,7 +20,9 @@ type jsonURL = jsonmodels.JSONURL
 
 type jsonResult = jsonmodels.JSONResult
 
-type jsonURLTouple = jsonmodels.JSONURLTouple
+type jsonURLTuple = jsonmodels.JSONURLTuple
+
+type jsonBlkIn = jsonmodels.JSONBulkInput
 
 type jsonBlkIn = jsonmodels.JSONBulkInput
 
@@ -39,10 +41,10 @@ type Storage interface {
 	Ping(ctx context.Context) bool
 }
 
+//User manager methods for managing users based on cookie
 type UserManager interface {
 	AddUserURL(user string, long string, id string) error
 	NewUser() (string, error)
-	CheckValid(cookie string) bool
 	GetAllUserURLs(cookie string) map[string]string
 }
 
@@ -131,7 +133,6 @@ func (a *api) CrShort(c *gin.Context) {
 	c.String(http.StatusBadRequest, "couldnt identify user")
 	return
 	}
-	fmt.Println(cookie)
 	defer c.Request.Body.Close()
 	req, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -145,7 +146,6 @@ func (a *api) CrShort(c *gin.Context) {
 	}
 	if el, err := a.st.GetByLong(string(req), c); err == nil {
 		a.userManager.AddUserURL(fmt.Sprint(cookie), string(req), el)
-		fmt.Println(a.st.GetByLong(string(req), c))
 		c.String(http.StatusConflict, a.opts.BaseURL+"/"+el)
 		return
 	}
@@ -190,6 +190,8 @@ func (a *api) Shorten(c *gin.Context) {
 	url := jsonURL{}
 	res := c.Request.Body
 
+	c.Header("Content-Type", "application/json")
+
 	defer res.Close()
 	body, err := ioutil.ReadAll(res)
 	if err != nil {
@@ -204,11 +206,18 @@ func (a *api) Shorten(c *gin.Context) {
 		return
 	}
 	if el, err := a.st.GetByLong(url.URL, c); err == nil {
-		c.String(http.StatusConflict, el)
+	resURL := jsonResult{
+		Result: a.opts.BaseURL + "/" + el,
+	}
+		result, err := json.Marshal(&resURL)
+		if err != nil {
+			c.String(http.StatusBadRequest, err.Error())
+			return
+		}
+		c.String(http.StatusConflict, string(result))
 		return
 	}
 
-	c.Header("Content-Type", "application/json")
 	shurl, err := a.urlProc.CreateShortURL(url.URL)
 
 	if err != nil {
@@ -224,13 +233,17 @@ func (a *api) Shorten(c *gin.Context) {
 		return
 	}
 	err = a.userManager.AddUserURL(cookie, url.URL, shurl)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	c.String(http.StatusCreated, string(result))
 }
 
 //mdwCompression: gzip compression middleware
 func (a *api) mdwCompression(c *gin.Context) {
 	if !strings.Contains(c.Request.Header.Get("Accept-Encoding"), "gzip") {
-		fmt.Println("normal mode")
 
 		c.Next()
 		return
@@ -238,7 +251,7 @@ func (a *api) mdwCompression(c *gin.Context) {
 	gz, err := gzip.NewWriterLevel(c.Writer, gzip.BestCompression)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
-		//	return
+		return
 	}
 
 	defer gz.Close()
@@ -262,16 +275,13 @@ func (a *api) mdwDecompression(c *gin.Context) {
 		return
 	}
 	defer gz.Close()
-	/* newBody, err := io.ReadAll(gz)
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	} */
+
 	c.Writer.Header().Del("Content-Length") //<-- otherwise corruption occurs
 	c.Request.Body = ioutil.NopCloser(gz)
 	c.Next()
 }
 
+//middleware to sort out cookie related sruff
 func (a *api) mdwCookie(c *gin.Context) {
 	cookie, err := c.Request.Cookie("url_shortner")
 
@@ -281,7 +291,6 @@ c.String(http.StatusBadRequest, err.Error())
 	}
 	if cookie != nil {
 		c.Set("cookie", cookie.Value)
-		fmt.Println(cookie.Value)
 
 		c.Next()
 		return
@@ -300,12 +309,13 @@ c.String(http.StatusBadRequest, err.Error())
 	c.Next()
 	}
 
+//getAllUserURLs: GET all urls that user with this cookie shortened
 func (a *api) getAllUserURLs(c *gin.Context) {
-	var err error
+	//	var err error
 
 	cookie := c.MustGet("cookie")
 
-	touples := []jsonURLTouple{}
+	tuples := []jsonURLTuple{}
 
 	c.Header("Content-Type", "application/json")
 
@@ -315,19 +325,25 @@ func (a *api) getAllUserURLs(c *gin.Context) {
 		return
 	}
 	for short, long := range(urls) {
-		touples = append(touples, jsonURLTouple{
+		tuples = append(tuples, jsonURLTuple{
 			Short: a.opts.BaseURL + `/` + short,
 			Long: long,
 		})
-		fmt.Println(short, long)
 	}
-	if res, err := json.Marshal(touples); err == nil {
+	if res, err := json.Marshal(tuples); err == nil {
 		c.String(http.StatusOK, string(res))
 		return
+	} else {
+		c.String(http.StatusBadRequest, err.Error())
 	}
-	c.String(http.StatusNoContent, err.Error())
+/*Здесь вот я не понимаю, я проверяю, если ошибка == nil, если так, то return, если != nil, то проходит
+  дальше и передает ее в респонс, но тогда go vet тест ругается, что я nil дереференсю, было как снизу else не было*/
+
+//c.String(http.StatusBadRequest, err.Error())
+
 }
 
+//pingDB: GET database response
 func (a *api) pingDB(c *gin.Context) {
 	if a.st.Ping(c) {
 		c.String(http.StatusOK, "" )
@@ -336,7 +352,7 @@ func (a *api) pingDB(c *gin.Context) {
 	c.String(http.StatusInternalServerError, "" )
 }
 
-
+//convertBulk: POST multiple urls to shorten at once
 func (a *api) convertBulk(c *gin.Context) {
 	defer c.Request.Body.Close()
 
@@ -360,17 +376,11 @@ func (a *api) convertBulk(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(raw)
-
 	if output, err = json.Marshal(&raw); err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
-
-
 	c.Header("Content-Type", "application/json")
 	c.String(http.StatusCreated, string(output))
-
-
 }
