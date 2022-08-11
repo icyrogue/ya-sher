@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 
+	"github.com/icyrogue/ya-sher/internal/jsonmodels"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/stdlib"
 )
@@ -26,7 +27,7 @@ func New() *storage {
 func (st *storage) Init() {
 	driverConfig := stdlib.DriverConfig{
 			ConnConfig: pgx.ConnConfig{
-				PreferSimpleProtocol: true,
+				//				PreferSimpleProtocol: true,
 			},
 		}
 	stdlib.RegisterDriverConfig(&driverConfig)
@@ -37,7 +38,7 @@ db, err := sql.Open("pgx", driverConfig.ConnectionString(st.Options.DBPath))
 		log.Fatal(err)
 		return
 	}
-	_, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT);`) //TODO возможно нужна какая то проверка, если таблица
+	_, err = db.Exec(`CREATE TABLE urls("id" TEXT, "long" TEXT, "token" TEXT);`) //TODO возможно нужна какая то проверка, если таблица
 	if err != nil {												   // уже существует
 		log.Println(err)
 	}
@@ -56,8 +57,9 @@ func (st *storage) Close() {
 }
 
 func (st *storage) Add(id string, long string) error {
-	_, err := st.db.Exec(`INSERT INTO urls(id, long) VALUES($1, $2)`, id, long ) //TODO возможно сделать тоже самое с транзакциями,
+	_, err := st.db.Exec(`INSERT INTO urls(id, long) VALUES($1, $2) ON CONFLICT`, id, long ) //TODO возможно сделать тоже самое с транзакциями,
 	if err != nil {																// которые заготавливаются в Init()
+		println("AAAAAAA")
 		println(err)
 		return err
 	}
@@ -101,4 +103,31 @@ func (st *storage) GetByLong(long string, ctx context.Context) (string, error) {
 		return "", errors.New("no such url")
 	}
 	return ot, nil
+}
+
+func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
+	tx, err := st.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	stmt, err := tx.Prepare("INSERT INTO urls(id, long, token) VALUES($1, $2, $3);")
+	if err != nil {
+		log.Println("1", err)
+		return err
+	}
+	defer stmt.Close()
+	for _, el := range(data) {
+		_, err := stmt.Exec(el.Short[len(el.Short)-8:], el.URL, el.CrlID)
+		if err != nil {
+		log.Println("2", err)
+		return err
+	}
+		//TODO нормально ошибки
+	}
+	  if err := tx.Commit(); err != nil {
+        log.Fatalf("update drivers: unable to commit: %v", err)
+    return err
+    }
+	return nil
 }

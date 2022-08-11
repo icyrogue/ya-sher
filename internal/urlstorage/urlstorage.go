@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/icyrogue/ya-sher/internal/jsonmodels"
 	"golang.org/x/net/context"
 )
 
@@ -137,4 +138,10 @@ func recoverData(flPath string) (map[string]string, error) {
 
 func (st *storage) Ping(ctx context.Context) bool {
 	return false
+}
+
+
+func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
+
+return nil
 }
