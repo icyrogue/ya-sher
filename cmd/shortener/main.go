@@ -7,6 +7,7 @@ import (
 	"github.com/icyrogue/ya-sher/internal/config"
 	"github.com/icyrogue/ya-sher/internal/idgen"
 	"github.com/icyrogue/ya-sher/internal/urlstorage"
+	"github.com/icyrogue/ya-sher/internal/usermanager"
 	"go.uber.org/zap"
 )
 
@@ -23,7 +24,11 @@ func main() {
 	storage.Options = opts.StrOpts
 	storage.Init()
 	usecase := idgen.New(storage)
-	api := api.New(logger, opts.URLOpts, usecase, storage)
+	usermanager, err := usermanager.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	api := api.New(logger, opts.URLOpts, usecase, storage, usermanager)
 	api.Init()
 	api.Run()
 	defer storage.Close()
