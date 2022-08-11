@@ -26,7 +26,6 @@ type usecase struct {
 }
 
 func (u *usecase) CreateShortURL(long string) (shurl string, err error) {
-	log.Println("staeted generation")
 	shurl = genID()
 	err = u.st.Add(shurl, long)
 	if err != nil {

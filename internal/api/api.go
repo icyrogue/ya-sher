@@ -10,17 +10,17 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/icyrogue/ya-sher/internal/jsonmodels"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
-//JSON model aliases
-type jsonURL = jsonmodels.JSONURL
+//JSON models
+type jsonURL struct {
+	URL string `json:"url"`
+}
 
-type jsonResult = jsonmodels.JSONResult
-
-type jsonURLTouple = jsonmodels.JSONURLTouple
+type jsonResult struct {
+	Result string `json:"result"`
+}
 
 type jsonURLTouple struct {
 	Short string `json:"short_url"`
@@ -34,16 +34,8 @@ type URLProcessor interface {
 
 //Storage interface for interfacing with storage
 type Storage interface {
-	GetByLong(long string, ctx context.Context) (string, error)
-	GetByID(id string, ctx context.Context) (string, error)
-	Ping(ctx context.Context) bool
-}
-
-type UserManager interface {
-	AddUserURL(user string, long string, id string) error
-	NewUser() (string, error)
-	CheckValid(cookie string) bool
-	GetAllUserURLs(cookie string) map[string]string
+	GetByLong(long string) (string, error)
+	GetByID(id string) (string, error)
 }
 
 type UserManager interface {
@@ -108,22 +100,13 @@ func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage, us
 }
 
 func (a *api) Init() {
-<<<<<<< HEAD
 	gin.SetMode(gin.ReleaseMode)
 	a.router = gin.New()
-=======
-	gin.SetMode(gin.DebugMode)
-	a.router = gin.Default()
->>>>>>> inc10
 	a.router.Use(a.mdwDecompression, a.mdwCompression, a.mdwCookie)
 	a.router.POST("/", a.CrShort)
 	a.router.GET("/:id", a.ReLong)
 	a.router.POST("/api/shorten", a.Shorten)
 	a.router.GET("/api/user/urls", a.getAllUserURLs)
-<<<<<<< HEAD
-=======
-	a.router.GET("/ping", a.pingDB)
->>>>>>> inc10
 }
 func (a *api) Run() {
 	re := regexp.MustCompile(`:\d*$`)
@@ -150,14 +133,8 @@ func (a *api) CrShort(c *gin.Context) {
 		c.String(http.StatusBadRequest, "This isn't an URL!")
 		return
 	}
-<<<<<<< HEAD
 	if el, errEl := a.st.GetByLong(string(req)); errEl == nil {
 		a.userManager.AddUserURL(fmt.Sprint(cookie), string(req), el)
-=======
-	if el, err := a.st.GetByLong(string(req), c); err == nil {
-		a.userManager.AddUserURL(fmt.Sprint(cookie), string(req), el)
-		fmt.Println(a.st.GetByLong(string(req), c))
->>>>>>> inc10
 		c.String(http.StatusCreated, a.opts.BaseURL+"/"+el)
 		return
 	}
@@ -183,7 +160,7 @@ func (a *api) ReLong(c *gin.Context) {
 		c.String(http.StatusBadRequest, "This isn't an id")
 		return
 	}
-	key, err := a.st.GetByID(id, c)
+	key, err := a.st.GetByID(id)
 	if err != nil {
 		c.String(http.StatusNotFound, err.Error())
 		return
@@ -335,14 +312,3 @@ func (a *api) getAllUserURLs(c *gin.Context) {
 	}
 	c.String(http.StatusNoContent, err.Error())
 }
-<<<<<<< HEAD
-=======
-
-func (a *api) pingDB(c *gin.Context) {
-	if a.st.Ping(c) {
-		c.String(http.StatusOK, "" )
-		return
-	}
-	c.String(http.StatusInternalServerError, "" )
-}
->>>>>>> inc10
