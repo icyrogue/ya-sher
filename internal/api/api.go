@@ -22,11 +22,6 @@ type jsonResult = jsonmodels.JSONResult
 
 type jsonURLTouple = jsonmodels.JSONURLTouple
 
-type jsonURLTouple struct {
-	Short string `json:"short_url"`
-	Long string `json:"original_url"`
-}
-
 //URLProcessor interface for creating short url using idgen business logic
 type URLProcessor interface {
 	CreateShortURL(long string) (shurl string, err error)
