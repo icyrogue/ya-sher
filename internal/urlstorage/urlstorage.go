@@ -140,8 +140,12 @@ func (st *storage) Ping(ctx context.Context) bool {
 	return false
 }
 
-
 func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
+	st.mtx.Lock()
+	defer st.mtx.Unlock()
+	for _, el := range data {
+		st.data[el.Short] = el.URL
+	}
 
-return nil
+	return nil
 }

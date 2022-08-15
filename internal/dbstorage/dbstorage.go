@@ -50,10 +50,7 @@ st.db = db
 
 //Ping: returns true if db is avilible
 func (st *storage) Ping(ctx context.Context) bool {
-	if err := st.db.PingContext(ctx); err != nil {
-		return false
-	}
-	return true
+	return st.db.PingContext(ctx) == nil
 }
 
 func (st *storage) Close() {
@@ -128,10 +125,6 @@ func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
 	for _, el := range(data) {
 		_, err := stmt.Exec(el.Short[len(el.Short)-8:], el.URL, el.CrlID)
 		if err != nil {
-			if err = tx.Rollback(); err != nil {
-			log.Println("Unable to rollback: ", err)
-			return err
-			}
 		log.Println(err)
 		return err
 	}

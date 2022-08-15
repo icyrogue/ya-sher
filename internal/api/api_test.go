@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-
+	"github.com/stretchr/testify/assert"
 	"github.com/icyrogue/ya-sher/internal/idgen"
 	"github.com/icyrogue/ya-sher/internal/urlstorage"
 	"github.com/icyrogue/ya-sher/internal/usermanager"
@@ -33,14 +32,14 @@ func Test_api_CrShort(t *testing.T) {
 			//BOILERPLATE\\
 			logger, err := zap.NewDevelopment()
 			if err != nil {
-				log.Fatalln(err)
+				t.Fatal(err)
 			}
 			storage := urlstorage.New()
 			storage.Init()
 			usecase := idgen.New(storage)
 			usermanager, err := usermanager.New()
 			if err != nil {
-				log.Fatal(err)
+				t.Fatal(err)
 			}
 			api := New(logger, &Options{}, usecase, storage, usermanager)
 			api.Init()
@@ -55,15 +54,10 @@ func Test_api_CrShort(t *testing.T) {
 				t.Errorf("Expected %d got %d", tt.wantedCode, res.StatusCode)
 			}
 			defer res.Body.Close()
-			body, err1 := ioutil.ReadAll(res.Body)
-			if err1 != nil {
-				t.Error(err1)
-			}
-			shurl, err2 := storage.GetByLong(tt.want, req.Context())
-			if err2 != nil {
-				t.Error(err.Error())
-				return
-			}
+			body, err := ioutil.ReadAll(res.Body)
+			assert.NoError(t, err)
+			shurl, err := storage.GetByLong(tt.want, req.Context())
+			assert.NoError(t, err)
 			fmt.Println(string(body))
 			cody := strings.SplitAfter(string(body), "/")[3]
 
@@ -88,7 +82,7 @@ func Test_api_ReLong(t *testing.T) {
 			//BOILERPLATE\\
 			logger, err := zap.NewDevelopment()
 			if err != nil {
-				log.Fatalln(err)
+				t.Fatal(err)
 			}
 			//	opts, _ := config.GetOpts()
 			storage := urlstorage.New()
@@ -96,7 +90,7 @@ func Test_api_ReLong(t *testing.T) {
 			usecase := idgen.New(storage)
 			usermanager, err := usermanager.New()
 			if err != nil {
-				log.Fatal(err)
+				t.Fatal(err)
 			}
 			api := New(logger, &Options{}, usecase, storage, usermanager)
 			api.Init()
@@ -143,7 +137,7 @@ func Test_api_Shorten(t *testing.T) {
 			//BOILERPLATE\\
 			logger, err := zap.NewDevelopment()
 			if err != nil {
-				log.Fatalln(err)
+				t.Fatal(err)
 			}
 			//	opts, _ := config.GetOpts()
 			storage := urlstorage.New()
@@ -151,7 +145,7 @@ func Test_api_Shorten(t *testing.T) {
 			usecase := idgen.New(storage)
 			usermanager, err := usermanager.New()
 			if err != nil {
-				log.Fatalln(err)
+				t.Fatal(err)
 			}
 			api := New(logger, &Options{}, usecase, storage, usermanager)
 			api.Init()
@@ -164,7 +158,7 @@ func Test_api_Shorten(t *testing.T) {
 			reqJSON, errJ := json.Marshal(wantJSON)
 
 			if errJ != nil {
-				log.Fatal(errJ)
+				t.Fatal(errJ)
 			}
 			req := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer(reqJSON))
 			api.router.ServeHTTP(w, req)
@@ -182,7 +176,7 @@ func Test_api_Shorten(t *testing.T) {
 			bodyJSON := jsonResult{}
 
 			if err := json.Unmarshal(body, &bodyJSON); err != nil {
-				log.Fatal(err)
+				t.Fatal(err)
 			}
 			shurl, err := storage.GetByLong(tt.want, req.Context())
 			if err != nil {

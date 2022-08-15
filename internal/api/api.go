@@ -348,24 +348,24 @@ func (a *api) convertBulk(c *gin.Context) {
 	body, err := ioutil.ReadAll(c.Request.Body)
 
 	if err != nil {
+		a.logger.Error("couldnt read request body")
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	input := []jsonBlkIn{}
-	raw := []jsonBlkIn{}
 	var output []byte
 
 	if err = json.Unmarshal(body, &input); err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	if raw, err = a.urlProc.BulkCreation(input, a.opts.BaseURL); err != nil {
+	if input, err = a.urlProc.BulkCreation(input, a.opts.BaseURL); err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if output, err = json.Marshal(&raw); err != nil {
+	if output, err = json.Marshal(&input); err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}

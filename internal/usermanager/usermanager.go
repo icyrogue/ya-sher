@@ -6,37 +6,39 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"hash"
+	"sync"
 )
 
 type user struct {
 	cookie []byte
 	urls map[string]string
+	//появлется ошибка go assignment copies lock value to usr
 }
 
 type UserManager struct {
 	users map[string]user
 	mac hash.Hash
 	key []byte
-
+	mtx sync.RWMutex
 }
 
 func (mu *UserManager) AddUserURL(cookie string, url string, id string) error {
 	usr := user{}
 	var ok bool
-	fmt.Println(cookie)
-
+	mu.mtx.RLock()
+		defer mu.mtx.RUnlock()
 	if usr, ok = mu.users[cookie]; !ok {
-		fmt.Println(mu.users)
 		return errors.New("no such user")
 	}
 	usr.urls[id] = url
-	fmt.Println("hey", usr.urls)
 	return nil
 }
 
 func (mu *UserManager) NewUser() (string, error) {
+	mu.mtx.Lock()
+	defer mu.mtx.Unlock()
+
 	ckeRaw := make([]byte, 8)
 	_, err := rand.Read(ckeRaw)
 	if err != nil {
@@ -61,17 +63,14 @@ func (mu *UserManager) CheckValid(cookie string) bool {
 	mu.mac.Write(cke)
 	new := mu.mac.Sum(nil)
 	org := mu.users[cookie].cookie
-	if hmac.Equal(org, new) {
-		return true
-	}
-	fmt.Println("awdawdawdawd")
-	return false
+	return hmac.Equal(org, new)
 }
 
 func (mu *UserManager) GetAllUserURLs(cookie string) map[string]string {
-	fmt.Println("hey" + cookie)
-	res := mu.users[cookie].urls
-	fmt.Print(res)
+	usr := mu.users[cookie]
+
+
+	res := usr.urls
 	return res
 }
 
