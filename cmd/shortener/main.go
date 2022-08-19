@@ -9,6 +9,7 @@ import (
 	"github.com/icyrogue/ya-sher/internal/idgen"
 	"github.com/icyrogue/ya-sher/internal/urlstorage"
 	"github.com/icyrogue/ya-sher/internal/usermanager"
+	"github.com/icyrogue/ya-sher/internal/mlt"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +30,8 @@ func main() {
 	storage := urlstorage.New()
 	storage.Options = opts.StrOpts
 	usecase := idgen.New(storage)
-	api := api.New(logger, opts.URLOpts, usecase, storage, usermanager)
+	mlt := mlt.New(storage)
+	api := api.New(logger, opts.URLOpts, usecase, storage, usermanager, mlt)
 	storage.Init()
 	api.Init()
 	api.Run()
@@ -39,7 +41,8 @@ func main() {
 	storage := dbstorage.New()
 	storage.Options = opts.DBOpts
 	usecase := idgen.New(storage)
-	api := api.New(logger, opts.URLOpts, usecase, storage, usermanager)
+	mlt := mlt.New(storage)
+	api := api.New(logger, opts.URLOpts, usecase, storage, usermanager, mlt)
 	storage.Init()
 	api.Init()
 	api.Run()

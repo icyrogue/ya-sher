@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"time"
 	"regexp"
 	"strings"
 	"sync"
@@ -148,4 +149,41 @@ func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
 	}
 
 	return nil
+}
+
+func (st *storage) BulkDelete(ctx context.Context, cancel context.CancelFunc, otch chan string) {
+
+	timer := time.AfterFunc(time.Duration(10)*time.Second, cancel)
+	defer timer.Stop()
+	go func (){
+		loop:
+		for {
+		select {
+		case v := <- otch:
+			timer.Reset(time.Duration(10)*time.Second)
+
+			st.mtx.Lock()
+			delete(st.data, v)
+			st.mtx.Unlock()
+		case <- ctx.Done():
+		//Даже если что то зависло в mlt мы все равно используем
+		//уже полученные данные через 60 секунд
+		log.Println("time ran out")
+
+			break loop
+		}}
+
+		if len(otch) != 0 {
+		check:
+			for v := range otch {
+				log.Println("appending? again")
+				st.mtx.Lock()
+				delete(st.data, v)
+				st.mtx.Unlock()
+				if len(otch) == 0 {
+					break check
+				}
+			}
+		}
+	}()
 }

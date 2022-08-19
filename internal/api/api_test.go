@@ -9,10 +9,12 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"github.com/stretchr/testify/assert"
+
 	"github.com/icyrogue/ya-sher/internal/idgen"
+	"github.com/icyrogue/ya-sher/internal/mlt"
 	"github.com/icyrogue/ya-sher/internal/urlstorage"
 	"github.com/icyrogue/ya-sher/internal/usermanager"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
@@ -41,7 +43,8 @@ func Test_api_CrShort(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			api := New(logger, &Options{}, usecase, storage, usermanager)
+			mlt := mlt.New(storage)
+			api := New(logger, &Options{}, usecase, storage, usermanager, mlt)
 			api.Init()
 			//Testing POST itself
 			w := httptest.NewRecorder()
@@ -92,7 +95,7 @@ func Test_api_ReLong(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			api := New(logger, &Options{}, usecase, storage, usermanager)
+			api := New(logger, &Options{}, usecase, storage, usermanager, mlt.New(storage))
 			api.Init()
 			//Creating mock short
 			shurl, err1 := usecase.CreateShortURL(tt.want)
@@ -147,7 +150,7 @@ func Test_api_Shorten(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			api := New(logger, &Options{}, usecase, storage, usermanager)
+			api := New(logger, &Options{}, usecase, storage, usermanager, mlt.New(storage))
 			api.Init()
 			//Testing POST itself
 			w := httptest.NewRecorder()

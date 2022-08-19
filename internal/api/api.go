@@ -35,6 +35,14 @@ type Storage interface {
 	GetByLong(long string, ctx context.Context) (string, error)
 	GetByID(id string, ctx context.Context) (string, error)
 	Ping(ctx context.Context) bool
+	BulkDelete(ctx context.Context, cancel context.CancelFunc, output chan string)
+}
+
+type Mlt interface {
+	Start(ctx context.Context)
+	GetInput() chan []string
+	GetOutput() chan string
+	GetState() bool
 }
 
 //User manager methods for managing users based on cookie
@@ -51,6 +59,8 @@ type api struct {
 	urlProc URLProcessor
 	st      Storage
 	userManager UserManager
+	mlt Mlt
+	//wg *sync.WaitGroup
 }
 
 type Options struct {
@@ -75,7 +85,7 @@ func (g *gzipWriter) Write(data []byte) (int, error) {
 	return g.writer.Write(data)
 }
 
-func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage, userManager UserManager) *api {
+func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage, userManager UserManager, mlt Mlt) *api {
 	df := `http://localhost:8080`
 	if opts == nil {
 		opts = &Options{
@@ -95,6 +105,8 @@ func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage, us
 		urlProc: urlProc,
 		st:      st,
 		userManager: userManager,
+		mlt: mlt,
+		//wg: &sync.WaitGroup{},
 	}
 }
 
@@ -108,6 +120,7 @@ func (a *api) Init() {
 	a.router.GET("/api/user/urls", a.getAllUserURLs)
 	a.router.GET("/ping", a.pingDB)
 	a.router.POST("/api/shorten/batch", a.convertBulk)
+	a.router.DELETE("/api/user/urls", a.Delete)
 }
 func (a *api) Run() {
 	re := regexp.MustCompile(`:\d*$`)
@@ -162,7 +175,7 @@ func (a *api) ReLong(c *gin.Context) {
 	}
 	key, err := a.st.GetByID(id, c)
 	if err != nil {
-		c.String(http.StatusNotFound, err.Error())
+		c.String(http.StatusGone, err.Error())
 		return
 	}
 	c.Header("Location", key)
@@ -372,4 +385,32 @@ func (a *api) convertBulk(c *gin.Context) {
 
 	c.Header("Content-Type", "application/json")
 	c.String(http.StatusCreated, string(output))
+}
+
+func (a *api) Delete(c *gin.Context) {
+	defer c.Request.Body.Close()
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	data := []string{}
+	if err = json.Unmarshal(body, &data); err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+	fmt.Println("waaaaaaa")
+	c.String(http.StatusAccepted, "")
+	fmt.Println("wtf")
+
+	go func (){
+	a.mlt.GetInput() <- data
+
+	if !a.mlt.GetState() {
+	ctx, cancel := context.WithCancel(c)
+	a.mlt.Start(ctx)
+	a.st.BulkDelete(ctx, cancel, a.mlt.GetOutput())
+	}
+	}()
 }
