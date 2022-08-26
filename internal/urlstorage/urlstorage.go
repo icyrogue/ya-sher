@@ -3,9 +3,9 @@ package urlstorage
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"log"
 	"os"
-	"time"
 	"regexp"
 	"strings"
 	"sync"
@@ -16,6 +16,7 @@ import (
 
 type storage struct {
 	data    map[string]string
+	delted 	map[string]bool
 	mtx     sync.RWMutex
 	writer  *bufio.Writer
 	reader  *bufio.Reader
@@ -25,6 +26,7 @@ type storage struct {
 
 type Options struct {
 	Filepath string
+	MaxWaiTime int
 }
 
 func New() *storage {
@@ -32,6 +34,7 @@ func New() *storage {
 }
 
 func (st *storage) Init() {
+	st.delted = make(map[string]bool)
 	flPath := ""
 	if st.Options != nil {
 		flPath = st.Options.Filepath
@@ -89,12 +92,13 @@ func (st *storage) Add(id string, long string) error {
 }
 
 //TODO: возможно стоит заставить и все остольные функции storage взаимодействовать с файлом, тогда можно не выгружать все в память, но, с другой стороны, у нас там дальше нужно будет базу данных добавить, поэтому я не знаю
-func (st *storage) GetByID(id string, ctx context.Context) (string, error) {
-	_ = ctx
+func (st *storage) GetByID( _ context.Context, id string) (string, error) {
 	st.mtx.RLock()
 	defer st.mtx.RUnlock()
 
-	if _, fd := st.data[id]; fd {
+	_, del := st.delted[id]
+
+	if _, fd := st.data[id]; fd && !del {
 		var long = st.data[id]
 		return long, nil
 	}
@@ -137,8 +141,8 @@ func recoverData(flPath string) (map[string]string, error) {
 	return data, nil
 }
 
-func (st *storage) Ping(ctx context.Context) bool {
-	return false
+func (st *storage) Ping(ctx context.Context) error {
+	return errors.New("running in RAM mode")
 }
 
 func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
@@ -151,39 +155,14 @@ func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
 	return nil
 }
 
-func (st *storage) BulkDelete(ctx context.Context, cancel context.CancelFunc, otch chan string) {
+func (st *storage) BulkDelete(bch []interface{}, _ string){
 
-	timer := time.AfterFunc(time.Duration(10)*time.Second, cancel)
-	defer timer.Stop()
-	go func (){
-		loop:
-		for {
-		select {
-		case v := <- otch:
-			timer.Reset(time.Duration(10)*time.Second)
+	for _, v := range bch {
 
 			st.mtx.Lock()
-			delete(st.data, v)
+			st.delted[fmt.Sprint(v)] = true
+			/*Возможно есть какой то более эффектинвый варнат для второго значения кроме bool,
+			  потому что мы его не проверяем нигде */
 			st.mtx.Unlock()
-		case <- ctx.Done():
-		//Даже если что то зависло в mlt мы все равно используем
-		//уже полученные данные через 60 секунд
-		log.Println("time ran out")
-
-			break loop
-		}}
-
-		if len(otch) != 0 {
-		check:
-			for v := range otch {
-				log.Println("appending? again")
-				st.mtx.Lock()
-				delete(st.data, v)
-				st.mtx.Unlock()
-				if len(otch) == 0 {
-					break check
-				}
-			}
-		}
-	}()
-}
+	}
+	}

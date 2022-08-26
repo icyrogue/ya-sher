@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/icyrogue/ya-sher/internal/jsonmodels"
-
 )
 
 //Get a seed so that ids are random every time
@@ -38,20 +37,18 @@ func (u *usecase) CreateShortURL(long string) (shurl string, err error) {
 	return shurl, nil
 }
 
-//BulkCreation: create multiple ids and append to database
 func (u usecase) BulkCreation(data []jsonmodels.JSONBulkInput, baseURL string) ([]jsonmodels.JSONBulkInput, error) {
-	for i := range(data){
+	for i := range data{
 		el := &data[i]
 		el.URL = el.Long
 		el.Long = ""
 		el.Short = (baseURL + "/" + genID())
-		log.Println(el)
 	}
 	/*Cкорей всго правильнее это сделать, добавляя новый эле-
 	  мент в слайс, но тогда нужно создавать слайс и
 	  каждый раз делать append, не знаю, что эффективнее
 	  А еще так можно сделать все с одной структурой!*/
-	log.Println(data)
+	log.Println("adding urls to storage:", data)
 	if err := u.st.BulkAdd(data); err != nil {
 		return []jsonmodels.JSONBulkInput{}, err
 	}

@@ -5,9 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/icyrogue/ya-sher/internal/jsonmodels"
 	"github.com/jackc/pgx"
@@ -51,8 +49,8 @@ st.db = db
 }
 
 //Ping: returns true if db is avilible
-func (st *storage) Ping(ctx context.Context) bool {
-	return st.db.PingContext(ctx) == nil
+func (st *storage) Ping(ctx context.Context) error {
+	return st.db.PingContext(ctx)
 }
 
 func (st *storage) Close() {
@@ -68,7 +66,7 @@ func (st *storage) Add(id string, long string) error {
 return nil
 }
 
-func (st *storage) GetByID(id string, ctx context.Context) (string, error) {
+func (st *storage) GetByID(ctx context.Context, id string) (string, error) {
 	row, err := st.db.QueryContext(ctx, `SELECT long, deleted FROM urls WHERE id = $1`, id)
 	if err != nil {
 		return "", err
@@ -142,50 +140,8 @@ func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
 	return nil
 }
 
-func (st *storage) BulkDelete(ctx context.Context, cancel context.CancelFunc, otch chan string) {
-	bch := make([]interface{}, 0, 5)
-	var args = "("
-	log.Println("started storage")
-
-	timer := time.AfterFunc(time.Duration(10)*time.Second, cancel)
-	defer timer.Stop()
-	go func (){
-		loop:
-		for {
-		select {
-		case v := <- otch:
-				log.Println("Storage got ", v)
-				timer.Reset(time.Duration(10)*time.Second)
-				bch = append(bch, v)
-				l := len(bch)
-			args = args + " $" + strconv.Itoa(l) + ","
-			log.Printf("storage is %d/%d", l, 60)
-			if len(bch) > 60 {
-				timer.Stop()
-				break loop
-			}
-
-		case <- ctx.Done():
-			log.Println("time ran out")
-
-			break loop
-		}}
-
-		if l := len(otch); l != 0 {
-		log.Printf("Buffer has %d elems left!", l)
-		check:
-			for v := range otch {
-				bch = append(bch, v)
-				args = args + " $" + strconv.Itoa(len(bch)) + ","
-				if len(otch) == 0 {
-					break check
-				}
-			}
-		}
-
-		log.Println("Commit to db pending")
-
-
+func (st *storage) BulkDelete(bch []interface{}, args string) {
+		//Все не похожие на id записи не пройдут воркера на стадии mlt, то есть инжекшены тоже
 		stmt, err := st.db.Prepare("UPDATE urls SET deleted = TRUE WHERE id IN" + args[:len(args)-1] + ")")
 		if err != nil {
 			log.Println(err.Error())
@@ -197,5 +153,4 @@ func (st *storage) BulkDelete(ctx context.Context, cancel context.CancelFunc, ot
 			return
 		}
 		log.Printf("Deleted %d elems in db", len(bch))
-	}()
-}
+	}

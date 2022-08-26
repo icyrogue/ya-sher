@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -33,16 +34,12 @@ type URLProcessor interface {
 //Storage interface for interfacing with storage
 type Storage interface {
 	GetByLong(long string, ctx context.Context) (string, error)
-	GetByID(id string, ctx context.Context) (string, error)
-	Ping(ctx context.Context) bool
-	BulkDelete(ctx context.Context, cancel context.CancelFunc, output chan string)
+	GetByID(ctx context.Context, id string) (string, error)
+	Ping(ctx context.Context) error
 }
 
 type Mlt interface {
-	Start(ctx context.Context)
 	GetInput() chan []string
-	GetOutput() chan string
-	GetState() bool
 }
 
 //User manager methods for managing users based on cookie
@@ -50,6 +47,7 @@ type UserManager interface {
 	AddUserURL(user string, long string, id string) error
 	NewUser() (string, error)
 	GetAllUserURLs(cookie string) map[string]string
+
 }
 
 type api struct {
@@ -173,7 +171,7 @@ func (a *api) ReLong(c *gin.Context) {
 		c.String(http.StatusBadRequest, "This isn't an id")
 		return
 	}
-	key, err := a.st.GetByID(id, c)
+	key, err := a.st.GetByID(c, id)
 	if err != nil {
 		c.String(http.StatusGone, err.Error())
 		return
@@ -347,11 +345,11 @@ func (a *api) getAllUserURLs(c *gin.Context) {
 
 //pingDB: GET database response
 func (a *api) pingDB(c *gin.Context) {
-	if a.st.Ping(c) {
-		c.String(http.StatusOK, "" )
+	if err := a.st.Ping(c); err != nil {
+		c.String(http.StatusInternalServerError, err.Error() )
 		return
 	}
-	c.String(http.StatusInternalServerError, "" )
+	c.String(http.StatusOK, "" )
 }
 
 //convertBulk: POST multiple urls to shorten at once
@@ -388,6 +386,11 @@ func (a *api) convertBulk(c *gin.Context) {
 }
 
 func (a *api) Delete(c *gin.Context) {
+	cookie, err := c.Request.Cookie("url_shortner")
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
 	defer c.Request.Body.Close()
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -400,17 +403,12 @@ func (a *api) Delete(c *gin.Context) {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	fmt.Println("waaaaaaa")
 	c.String(http.StatusAccepted, "")
-	fmt.Println("wtf")
 
 	go func (){
-	a.mlt.GetInput() <- data
+		data = append(data, cookie.Value)
+		a.mlt.GetInput() <- data
+		log.Println(data)
 
-	if !a.mlt.GetState() {
-	ctx, cancel := context.WithCancel(c)
-	a.mlt.Start(ctx)
-	a.st.BulkDelete(ctx, cancel, a.mlt.GetOutput())
-	}
 	}()
 }

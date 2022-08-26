@@ -43,7 +43,7 @@ func Test_api_CrShort(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			mlt := mlt.New(storage)
+			mlt := mlt.New(usermanager)
 			api := New(logger, &Options{}, usecase, storage, usermanager, mlt)
 			api.Init()
 			//Testing POST itself
@@ -95,7 +95,7 @@ func Test_api_ReLong(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			api := New(logger, &Options{}, usecase, storage, usermanager, mlt.New(storage))
+			api := New(logger, &Options{}, usecase, storage, usermanager, mlt.New(usermanager))
 			api.Init()
 			//Creating mock short
 			shurl, err1 := usecase.CreateShortURL(tt.want)
@@ -150,7 +150,7 @@ func Test_api_Shorten(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			api := New(logger, &Options{}, usecase, storage, usermanager, mlt.New(storage))
+			api := New(logger, &Options{}, usecase, storage, usermanager, mlt.New(usermanager))
 			api.Init()
 			//Testing POST itself
 			w := httptest.NewRecorder()
