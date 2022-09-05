@@ -142,7 +142,7 @@ func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
 
 func (st *storage) BulkDelete(bch []interface{}, args string) {
 		//Все не похожие на id записи не пройдут воркера на стадии mlt, то есть инжекшены тоже
-		stmt, err := st.db.Prepare("UPDATE urls SET deleted = TRUE WHERE id IN" + args[:len(args)-1] + ")")
+		stmt, err := st.db.Prepare("UPDATE urls SET deleted = TRUE WHERE id = ANY" + args[:len(args)-1] + "])")
 		if err != nil {
 			log.Println(err.Error())
 			return

@@ -40,7 +40,7 @@ func New(opts *Options, st Storage) *Musher {
 
 func (m *Musher) Start(ctx context.Context) {
 	bch := make([]interface{}, 0, 5)
-	var args = "("
+	var args = "(ARRAY["
 	bl := m.Options.MaxBufferLength
 	t := make(chan struct{})
 	wt := time.Duration(m.Options.MaxWaitTime) * time.Second
