@@ -7,7 +7,7 @@ import (
 	"github.com/icyrogue/ya-sher/internal/api"
 	"github.com/icyrogue/ya-sher/internal/config"
 	"github.com/icyrogue/ya-sher/internal/idgen"
-	"github.com/icyrogue/ya-sher/internal/mlt"
+	"github.com/icyrogue/ya-sher/internal/multithreaddeleteurlprocessor"
 	"github.com/icyrogue/ya-sher/internal/musher"
 	"github.com/icyrogue/ya-sher/internal/storager"
 	"github.com/icyrogue/ya-sher/internal/usermanager"
@@ -30,17 +30,17 @@ func main() {
 	storage := storager.Get(*opts)
 	usecase := idgen.New(storage)
 
-	msh := musher.New(opts.MushOpts, storage)
-	mlt := mlt.New(usermanager)
-	mlt.Output = msh.Input
+	musher := musher.New(opts.MushOpts, storage)
+	multiThreadDeleteURLProcessor := mlt.New(usermanager)
+	multiThreadDeleteURLProcessor.Output = musher.Input
 	ctx := context.Background()
 
-	api := api.New(logger, opts.URLOpts, usecase, storage, usermanager, mlt)
+	api := api.New(logger, opts.URLOpts, usecase, storage, usermanager, multiThreadDeleteURLProcessor)
 	storage.Init()
 	api.Init()
 
-	msh.Start(ctx)
-	mlt.Start(ctx)
+	musher.Start(ctx)
+	multiThreadDeleteURLProcessor.Start(ctx)
 
 	api.Run()
 

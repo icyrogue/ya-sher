@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/icyrogue/ya-sher/internal/idgen"
-	"github.com/icyrogue/ya-sher/internal/mlt"
+	"github.com/icyrogue/ya-sher/internal/multithreaddeleteurlprocessor"
 	"github.com/icyrogue/ya-sher/internal/urlstorage"
 	"github.com/icyrogue/ya-sher/internal/usermanager"
 	"github.com/stretchr/testify/assert"

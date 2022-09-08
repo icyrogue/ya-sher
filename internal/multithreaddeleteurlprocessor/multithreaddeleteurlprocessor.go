@@ -14,7 +14,7 @@ type Storage interface {
 }
 
 
-type Mlt struct {
+type MultiThreadDeleteURLProcessor struct {
 	st Storage
 	wg *errgroup.Group
 	Output chan string
@@ -23,13 +23,13 @@ type Mlt struct {
 
 type worker struct {
 	id string
-	otch chan string
+	output chan string
 	wg *errgroup.Group
 	userurls map[string]string
 }
 
-func New(st Storage) *Mlt{
-	return &Mlt {
+func New(st Storage) *MultiThreadDeleteURLProcessor{
+	return &MultiThreadDeleteURLProcessor {
 		st: st,
 			//	wg: &sync.WaitGroup{},
 		data: make(chan []string, 5),
@@ -37,7 +37,7 @@ func New(st Storage) *Mlt{
 	}
 }
 
-func (m *Mlt) Start (ctx context.Context) {
+func (m *MultiThreadDeleteURLProcessor) Start (ctx context.Context) {
 	g, _ := errgroup.WithContext(ctx)
 	m.wg = g
 	var pop int
@@ -53,7 +53,7 @@ func (m *Mlt) Start (ctx context.Context) {
 		urls := m.st.GetAllUserURLs(cookie)
 
 		for _, dt := range data {
-			wk := worker{id: dt, wg: m.wg, otch: m.Output, userurls: urls}
+			wk := worker{id: dt, wg: m.wg, output: m.Output, userurls: urls}
 		go wk.Do()
 		}
 	case <- ctx.Done():
@@ -80,12 +80,12 @@ func (w *worker) Do() error {
 		return err
 	}
 
-	w.otch <- w.id
+	w.output <- w.id
 	log.Println("done", w.id)
 	return nil
 }
 
-func (m *Mlt) GetInput() chan []string {
+func (m *MultiThreadDeleteURLProcessor) GetInput() chan []string {
 	return m.data
 }
 

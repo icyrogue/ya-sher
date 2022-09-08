@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -38,7 +37,7 @@ type Storage interface {
 	Ping(ctx context.Context) error
 }
 
-type Mlt interface {
+type MultiThreadDeleteURLProcessor interface {
 	GetInput() chan []string
 }
 
@@ -57,7 +56,7 @@ type api struct {
 	urlProc URLProcessor
 	st      Storage
 	userManager UserManager
-	mlt Mlt
+	multiThreadDeleteURLProcessor MultiThreadDeleteURLProcessor
 	//wg *sync.WaitGroup
 }
 
@@ -83,7 +82,7 @@ func (g *gzipWriter) Write(data []byte) (int, error) {
 	return g.writer.Write(data)
 }
 
-func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage, userManager UserManager, mlt Mlt) *api {
+func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage, userManager UserManager, mlt MultiThreadDeleteURLProcessor) *api {
 	df := `http://localhost:8080`
 	if opts == nil {
 		opts = &Options{
@@ -103,7 +102,7 @@ func New(logger *zap.Logger, opts *Options, urlProc URLProcessor, st Storage, us
 		urlProc: urlProc,
 		st:      st,
 		userManager: userManager,
-		mlt: mlt,
+		multiThreadDeleteURLProcessor: mlt,
 		//wg: &sync.WaitGroup{},
 	}
 }
@@ -407,8 +406,7 @@ func (a *api) Delete(c *gin.Context) {
 
 	go func (){
 		data = append(data, cookie.Value)
-		a.mlt.GetInput() <- data
-		log.Println(data)
+		a.multiThreadDeleteURLProcessor.GetInput() <- data
 
 	}()
 }
