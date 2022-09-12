@@ -3,15 +3,20 @@ package urlstorage
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/icyrogue/ya-sher/internal/jsonmodels"
+	"golang.org/x/net/context"
 )
 
 type storage struct {
 	data    map[string]string
+	delted 	map[string]bool
 	mtx     sync.RWMutex
 	writer  *bufio.Writer
 	reader  *bufio.Reader
@@ -21,6 +26,7 @@ type storage struct {
 
 type Options struct {
 	Filepath string
+	MaxWaiTime int
 }
 
 func New() *storage {
@@ -28,6 +34,7 @@ func New() *storage {
 }
 
 func (st *storage) Init() {
+	st.delted = make(map[string]bool)
 	flPath := ""
 	if st.Options != nil {
 		flPath = st.Options.Filepath
@@ -85,17 +92,19 @@ func (st *storage) Add(id string, long string) error {
 }
 
 //TODO: возможно стоит заставить и все остольные функции storage взаимодействовать с файлом, тогда можно не выгружать все в память, но, с другой стороны, у нас там дальше нужно будет базу данных добавить, поэтому я не знаю
-func (st *storage) GetByID(id string) (string, error) {
+func (st *storage) GetByID( _ context.Context, id string) (string, error) {
 	st.mtx.RLock()
 	defer st.mtx.RUnlock()
 
-	if _, fd := st.data[id]; fd {
+	_, del := st.delted[id]
+
+	if _, fd := st.data[id]; fd && !del {
 		var long = st.data[id]
 		return long, nil
 	}
 	return "", errors.New("no url with such ID")
 }
-func (st *storage) GetByLong(long string) (string, error) {
+func (st *storage) GetByLong(long string, ctx context.Context) (string, error) {
 	for id, el := range st.data {
 		if el == long {
 			return id, nil
@@ -131,3 +140,29 @@ func recoverData(flPath string) (map[string]string, error) {
 
 	return data, nil
 }
+
+func (st *storage) Ping(ctx context.Context) error {
+	return errors.New("running in RAM mode")
+}
+
+func (st *storage) BulkAdd(data []jsonmodels.JSONBulkInput) error {
+	st.mtx.Lock()
+	defer st.mtx.Unlock()
+	for _, el := range data {
+		st.data[el.Short] = el.URL
+	}
+
+	return nil
+}
+
+func (st *storage) BulkDelete(bch []interface{}, _ string){
+
+	for _, v := range bch {
+
+			st.mtx.Lock()
+			st.delted[fmt.Sprint(v)] = true
+			/*Возможно есть какой то более эффектинвый варнат для второго значения кроме bool,
+			  потому что мы его не проверяем нигде */
+			st.mtx.Unlock()
+	}
+	}
